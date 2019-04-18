@@ -300,7 +300,7 @@ class Addon {
 
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
-            $returnArray = array("success"=>true);
+            //$returnArray = array("success"=>true);
             $index = 1;
             foreach($domainDataRemote["nameservers"] as $nameserver) {
                 $returnArray["ns".$index] = $nameserver;
@@ -308,7 +308,6 @@ class Addon {
             }
             
             Api::closeApiConnection($apiConnection);
-
             return $returnArray;
         
         } catch (\Exception $e) {

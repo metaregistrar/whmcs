@@ -121,13 +121,11 @@ class Helpers {
             "authorisationCode" => self::getRandomString(),
             "eppCode"           => $params["transfersecret"]
         );
-        
         for($i=1;$i<=5;$i++) {
             if(!empty($params["ns".$i])) {
                 $domainData["nameservers"][] = $params["ns".$i];
             }
         }
-        
         $pdo = Capsule::connection()->getPdo();
         $query = "SELECT expirydate FROM tbldomains WHERE domain = '".$params["domainname"]."'";
         $pdo->beginTransaction();

@@ -93,9 +93,7 @@ function Metaregistrar_GetEPPCode($params) {
 
 function Metaregistrar_GetNameservers($params) {
     try {
-        
         return \MetaregistrarModule\classes\Addon::getNameservers($params);
-        
     } catch (Exception $e) {
         return array('error' => $e->getMessage());
     }

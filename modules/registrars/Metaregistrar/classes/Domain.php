@@ -111,14 +111,14 @@ class Domain {
             $domainDel  = new eppDomain($domainData["name"]);
             foreach($domainDataRemote["nameservers"] as $nameserver) {
                 if(!in_array($nameserver, $domainData["nameservers"])) {
-                    $domainDel->addHost(new \Metaregistrar\EPP\eppHost($nameserver));
+                    $domainDel->addHost(new eppHost($nameserver));
                 }
             }
             
             $domainAdd  = new eppDomain($domainData["name"]);
             foreach($domainData["nameservers"] as $nameserver) {
                 if(!in_array($nameserver, $domainDataRemote["nameservers"])) {
-                    $domainAdd->addHost(new \Metaregistrar\EPP\eppHost($nameserver));
+                    $domainAdd->addHost(new eppHost($nameserver));
                 }
             }
             
@@ -156,11 +156,10 @@ class Domain {
             $response   = $apiConnection->request($request);
             
             $domain = $response->getDomain();
-            
             foreach ($domain->getHosts() as $nameserver) {
                 $domainDataRemote["nameservers"][] = $nameserver->getHostname();
             }
-            
+
             $domainDataRemote["registrantId"] = $domain->getRegistrant();
             
             foreach ($domain->getContacts() as $contact) {
@@ -171,9 +170,8 @@ class Domain {
             $domainDataRemote["eppCode"] = $domain->getAuthorisationCode();
             $domainDataRemote["expDate"] = substr($response->getDomainExpirationDate(),0,10);
             $domainDataRemote["statuses"] = $response->getDomainStatuses();
-            
             return $domainDataRemote;
-            
+
         } catch (eppException $e) {
             throw new \Exception($e->getMessage());
         }
