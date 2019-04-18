@@ -29,8 +29,8 @@ class Helpers {
         return array(
             "username"  => $apiData["apiUsername"],
             "password"  => $apiData["apiPassword"],
-            "port"      => $apiData["apiPort"],
-            "host"      => "ssl://".$apiData["apiHostname"],
+            "port"      => 7000,
+            "host"      => "ssl://eppl.metaregistrar.com",
             "debugMode" => ($apiData["debugMode"]=="on")?true:false
         );
     }

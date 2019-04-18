@@ -8,6 +8,7 @@ use \Metaregistrar\EPP\eppException;
 class Api {
     static function getApiConnection($apiData){
         $connection = new eppConnection();
+        logActivity("MetaregistrarModule: ".$apiData["host"], $_SESSION["uid"]);
         $connection->setHostname($apiData["host"]);
         $connection->setPort($apiData["port"]);
         $connection->setUsername($apiData["username"]);

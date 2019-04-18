@@ -13,8 +13,7 @@ function Hook_Metaregistrar_AdminAreaTable($params) {
         return \MetaregistrarModule\classes\Hooks::adminAreaTable();
         
     } catch (Exception $e) {
-        $loggedWhmcsUserId = $_SESSION["uid"];
-        logActivity("MetaregistrarModule: ".$e->getMessage(), $loggedWhmcsUserId);
+        logActivity("MetaregistrarModule: ".$e->getMessage(), $_SESSION["uid"]);
     }
 }
 add_hook('AdminAreaFooterOutput', 1, 'Hook_Metaregistrar_AdminAreaTable');

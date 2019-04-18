@@ -24,20 +24,6 @@ class Addon {
         $pdo->commit();
         
         return array(
-            "apiHostname" => array (
-                "FriendlyName" => "Host",
-                "Type" => "text",
-                "Size" => "25", 
-                "Description" => "",
-                "Default" => "",
-            ),
-            "apiPort" => array (
-                "FriendlyName" => "Port",
-                "Type" => "text",
-                "Size" => "25", 
-                "Description" => "",
-                "Default" => "",
-            ),
             "apiUsername" => array (
                 "FriendlyName" => "Username",
                 "Type" => "text",
@@ -66,6 +52,7 @@ class Addon {
             $apiData        = Helpers::getApiData();
             $apiConnection  = Api::getApiConnection($apiData);
             $domainData     = Helpers::getDomainData($params);
+
             if(!Domain::isAvailable($domainData, $apiConnection)) {
                 throw new \Exception("Domain already registered.");
             }
@@ -85,7 +72,6 @@ class Addon {
                     Contact::addProperties($contactData, $apiConnection);
                 }
             }
-            logActivity("MetaregistrarModule: Domainregister", $_SESSION["uid"]);
             Domain::register($domainData, $apiConnection);
             //$domainData["autorenew"]    = false;
             //Domain::setAutorenew($domainData, $apiConnection);

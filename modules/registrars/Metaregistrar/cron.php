@@ -9,7 +9,6 @@ try {
     \MetaregistrarModule\classes\Cron::poll();
     
 } catch (Exception $e) {
-    $loggedWhmcsUserId = $_SESSION["uid"];
-    logActivity("MetaregistrarModule: ".$e->getMessage(), $loggedWhmcsUserId);
+    logActivity("MetaregistrarModule: ".$e->getMessage(), $_SESSION["uid"]);
 }
 
