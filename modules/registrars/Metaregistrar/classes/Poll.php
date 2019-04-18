@@ -6,14 +6,14 @@ use Metaregistrar\EPP\eppConnection;
 use Metaregistrar\EPP\eppException;
 use Metaregistrar\EPP\eppPollRequest;
 use Metaregistrar\EPP\eppPollResponse;
-use Metaregistrar\EPP\eppResponse;
 
 class Poll {
-    static function getMessage($apiConnection) {
+    static function getMessage(eppConnection $apiConnection) {
         try {
             
-            $request    = new eppPollRequest(eppPollRequest::POLL_REQ, 0);
-            $response   = $apiConnection->request($request);
+            $response   = $apiConnection->request(new eppPollRequest(eppPollRequest::POLL_REQ, 0));
+
+            /* @var $response eppPollResponse */
             $msgCount =  $response->getMessageCount();
                 
             if($msgCount == 0) {
@@ -32,11 +32,10 @@ class Poll {
         }
     }
     
-    static function ackMessage($message, $apiConnection) {
+    static function ackMessage($message, eppConnection $apiConnection) {
         try {
             
-            $request    = new eppPollRequest(eppPollRequest::POLL_ACK, $message["id"]);
-            $response   = $apiConnection->request($request);
+            $apiConnection->request(new eppPollRequest(eppPollRequest::POLL_ACK, $message["id"]));
             
         } catch (eppException $e) {
             throw new \Exception($e->getMessage());

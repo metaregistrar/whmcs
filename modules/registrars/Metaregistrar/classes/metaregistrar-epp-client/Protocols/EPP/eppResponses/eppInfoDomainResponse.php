@@ -63,7 +63,7 @@ class eppInfoDomainResponse extends eppInfoResponse {
     /**
      * Receive an array of statuses
      *
-     * @return string status
+     * @return array|null status
      */
     public function getDomainStatuses() {
         $statuses = null;

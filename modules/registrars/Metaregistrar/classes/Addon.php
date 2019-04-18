@@ -6,6 +6,8 @@ use WHMCS\Domains\DomainLookup\ResultsList;
 use WHMCS\Domains\DomainLookup\SearchResult;
 
 class Addon {
+
+
     static function getConfig($params) {
         
         $pdo = Capsule::connection()->getPdo();
@@ -25,17 +27,17 @@ class Addon {
         
         return array(
             "apiUsername" => array (
-                "FriendlyName" => "Username",
+                "FriendlyName" => "EPP Username",
                 "Type" => "text",
                 "Size" => "25", 
-                "Description" => "",
+                "Description" => "Enter the EPP API username of your Metaregistrar account",
                 "Default" => "",
             ),
             "apiPassword" => array (
-                "FriendlyName" => "Password",
+                "FriendlyName" => "EPP Password",
                 "Type" => "password",
                 "Size" => "25",
-                "Description" => "",
+                "Description" => "Enter the EPP API password of your Metaregistrar account",
                 "Default" => "",
             ),
             "debugMode" => array (
@@ -48,13 +50,14 @@ class Addon {
     }
     
     static function registerDomain($params) {
+        $apiData        = Helpers::getApiData();
+        $apiConnection  = Api::getApiConnection($apiData);
         try {
-            $apiData        = Helpers::getApiData();
-            $apiConnection  = Api::getApiConnection($apiData);
+
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isAvailable($domainData, $apiConnection)) {
-                throw new \Exception("Domain already registered.");
+                throw new \Exception("Domain is already registered.");
             }
 
             $contactTypeArray = array(
@@ -89,8 +92,7 @@ class Addon {
                     }
                 }
             } catch(\Exception $e2) {
-                $loggedWhmcsUserId = $_SESSION["uid"];
-                logActivity("MetaregistrarModule: ".$e2->getMessage(), $loggedWhmcsUserId);
+                logActivity("MetaregistrarModule: ".$e2->getMessage(),$_SESSION["uid"]);
             }
             
             Api::closeApiConnection($apiConnection);
@@ -99,10 +101,9 @@ class Addon {
     }
     
     static function sync($params) {
+        $apiData        = Helpers::getApiData();
+        $apiConnection  = Api::getApiConnection($apiData);
         try {
-            $apiData        = Helpers::getApiData();
-            $apiConnection  = Api::getApiConnection($apiData);
-
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -127,10 +128,9 @@ class Addon {
     }
     
     static function transferDomain($params) {
+        $apiData        = Helpers::getApiData();
+        $apiConnection  = Api::getApiConnection($apiData);
         try {
-            $apiData        = Helpers::getApiData();
-            $apiConnection  = Api::getApiConnection($apiData);
-
             $domainData     = Helpers::getDomainData($params);
 
             if(Domain::isAvailable($domainData, $apiConnection)) {
@@ -177,10 +177,9 @@ class Addon {
     }
     
     static function transferSync($params) {
+        $apiData        = Helpers::getApiData();
+        $apiConnection  = Api::getApiConnection($apiData);
         try {
-            $apiData        = Helpers::getApiData();
-            $apiConnection  = Api::getApiConnection($apiData);
-
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -203,10 +202,9 @@ class Addon {
     }
     
     static function renewDomain($params) {
+        $apiData        = Helpers::getApiData();
+        $apiConnection  = Api::getApiConnection($apiData);
         try {
-            $apiData        = Helpers::getApiData();
-            $apiConnection  = Api::getApiConnection($apiData);
-
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -228,10 +226,9 @@ class Addon {
     }
     
     static function deleteDomain($params) {
+        $apiData        = Helpers::getApiData();
+        $apiConnection  = Api::getApiConnection($apiData);
         try {
-            $apiData        = Helpers::getApiData();
-            $apiConnection  = Api::getApiConnection($apiData);
-
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -249,10 +246,9 @@ class Addon {
     }
     
     static function getEppCode($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
         try {
-            $apiData            = Helpers::getApiData();
-            $apiConnection      = Api::getApiConnection($apiData);
-
             $domainData         = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -274,19 +270,19 @@ class Addon {
     }
     
     static function getNameservers($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
         try {
-            $apiData            = Helpers::getApiData();
-            $apiConnection      = Api::getApiConnection($apiData);
-
             $domainData         = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
-                return;
+                return null;
             }
 
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
             //$returnArray = array("success"=>true);
+            $returnArray = array();
             $index = 1;
             foreach($domainDataRemote["nameservers"] as $nameserver) {
                 $returnArray["ns".$index] = $nameserver;
@@ -303,9 +299,9 @@ class Addon {
     }
     
     static function saveNameservers($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
         try {
-            $apiData            = Helpers::getApiData();
-            $apiConnection      = Api::getApiConnection($apiData);
 
             $domainData         = Helpers::getDomainData($params);
 
@@ -324,10 +320,9 @@ class Addon {
     }
     
     static function registerNameserver($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
         try {
-            $apiData            = Helpers::getApiData();
-            $apiConnection      = Api::getApiConnection($apiData);
-
             $hostData           = Helpers::getHostData($params);
 
             Host::register($hostData, $apiConnection);
@@ -341,10 +336,9 @@ class Addon {
     }
     
     static function deleteNameserver($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
         try {
-            $apiData            = Helpers::getApiData();
-            $apiConnection      = Api::getApiConnection($apiData);
-
             $hostData           = Helpers::getHostData($params);
 
             Host::delete($hostData, $apiConnection);
@@ -358,10 +352,9 @@ class Addon {
     }
     
     static function updateNameserver($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
         try {
-            $apiData            = Helpers::getApiData();
-            $apiConnection      = Api::getApiConnection($apiData);
-
             $hostData           = Helpers::getHostData($params);
 
             Host::update($hostData, $apiConnection);
@@ -375,10 +368,9 @@ class Addon {
     }
     
     static function getContactDetails($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
         try {
-            $apiData            = Helpers::getApiData();
-            $apiConnection      = Api::getApiConnection($apiData);
-
             $apiConnection->setTimeout(30);
 
             $domainData         = Helpers::getDomainData($params);
@@ -417,9 +409,9 @@ class Addon {
     }
     
     static function saveContactDetails($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
         try {
-            $apiData            = Helpers::getApiData();
-            $apiConnection      = Api::getApiConnection($apiData);
 
             $apiConnection->setTimeout(30);
 
@@ -451,13 +443,51 @@ class Addon {
             throw $e;
         }    
     }
-    
+
+    static function getDomainLock($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
+        try {
+            $domainData         = Helpers::getDomainData($params);
+
+            if(!Domain::isRegistered($domainData, $apiConnection)) {
+                throw new \Exception("Domain is not registered.");
+            }
+            if (Domain::isLocked($domainData,$apiConnection)) {
+                return 'locked';
+            } else {
+                return 'unlocked';
+            }
+        } catch (\Exception $e) {
+            Api::closeApiConnection($apiConnection);
+            throw $e;
+        }
+
+    }
+
+    static function saveDomainLock($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
+        try {
+            $domainData         = Helpers::getDomainData($params);
+
+            if(!Domain::isRegistered($domainData, $apiConnection)) {
+                throw new \Exception("Domain is not registered.");
+            }
+            Domain::setDomainLock($domainData, $apiConnection, ($params['lockenabled']=='locked' ? true : false));
+
+        } catch (\Exception $e) {
+            Api::closeApiConnection($apiConnection);
+            throw $e;
+        }
+
+    }
+
     static function checkAvailability($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
         try {
             $results = new ResultsList();
-
-            $apiData            = Helpers::getApiData();
-            $apiConnection      = Api::getApiConnection($apiData);
 
             foreach ($params["tlds"] as $tld) {
                 $domainData["search"][] = array(

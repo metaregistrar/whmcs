@@ -3,6 +3,7 @@
 namespace MetaregistrarModule\classes;
 
 use \Metaregistrar\EPP\eppConnection;
+use Metaregistrar\EPP\eppCreateContactResponse;
 use \Metaregistrar\EPP\eppException;
 use \Metaregistrar\EPP\eppContactPostalInfo;
 use \Metaregistrar\EPP\eppContact;
@@ -10,12 +11,13 @@ use \Metaregistrar\EPP\eppContactHandle;
 use \Metaregistrar\EPP\eppCreateContactRequest;
 use \Metaregistrar\EPP\eppDeleteContactRequest;
 use \Metaregistrar\EPP\eppInfoContactRequest;
+use \Metaregistrar\EPP\eppInfoContactResponse;
 use \Metaregistrar\EPP\eppUpdateContactRequest;
 use \Metaregistrar\EPP\metaregEppUpdateContactRequest;
 
 
 class Contact {
-    static function register($contactData, $apiConnection) {
+    static function register($contactData, eppConnection $apiConnection) {
         try {
             $postalInfo = new eppContactPostalInfo(
                 $contactData["name"],
@@ -36,9 +38,8 @@ class Contact {
             
             $contactInfo->setPassword($contactData["password"]);
             
-            $request    = new eppCreateContactRequest($contactInfo);
-            $response   = $apiConnection->request($request);
-            
+            $response   = $apiConnection->request(new eppCreateContactRequest($contactInfo));
+            /* @var $response eppCreateContactResponse */
             return $response->getContactId();
             
         } catch (eppException $e) {
@@ -46,7 +47,7 @@ class Contact {
         }
     }
     
-    static function update($contactData, $apiConnection) {
+    static function update($contactData, eppConnection $apiConnection) {
         try {
             
             $postalInfo = new eppContactPostalInfo(
@@ -67,59 +68,50 @@ class Contact {
             );
             
             $contactInfo->setPassword($contactData["password"]);
-            
             $contactHandle = new eppContactHandle($contactData["id"]);
             
-            $request    = new eppUpdateContactRequest($contactHandle, null, null, $contactInfo);
-            $response   = $apiConnection->request($request);
+            $apiConnection->request(new eppUpdateContactRequest($contactHandle, null, null, $contactInfo));
             
         } catch (eppException $e) {
             throw new \Exception($e->getMessage());
         }
     }
     
-    static function addProperties($contactData, $apiConnection) {
+    static function addProperties($contactData, eppConnection $apiConnection) {
         try {
             $contactHandle = new eppContactHandle($contactData["id"]);
-            
             $apiConnection->useExtension('command-ext-1.0');
             
             $request    = new metaregEppUpdateContactRequest($contactHandle, null, null, null);
-            
             foreach($contactData["properties"] as $propertyName => $propertyValue) {
                 $request -> addContactProperty($contactData["registry"], $propertyName, $propertyValue);
             }
-            
-            $response   = $apiConnection->request($request);
+            $apiConnection->request($request);
             
         } catch (eppException $e) {
             throw new \Exception($e->getMessage());
         }
     }
     
-    static function remove($contactData, $apiConnection) {
+    static function remove($contactData, eppConnection $apiConnection) {
         try {
             $contactHandle = new eppContactHandle($contactData["id"]);
-            
-            $request    = new eppDeleteContactRequest($contactHandle);
-            $response   = $apiConnection->request($request);
-        
+            $apiConnection->request(new eppDeleteContactRequest($contactHandle));
         } catch (eppException $e) {
             throw new \Exception($e->getMessage());
         }
     }
     
-    static function getInfo($contactData, $apiConnection) {
+    static function getInfo($contactData, eppConnection $apiConnection) {
         try {
             $contactHandle = new eppContactHandle($contactData["id"]);
             
-            $request    = new eppInfoContactRequest($contactHandle);
-            $response   = $apiConnection->request($request);
-            
+            $response   = $apiConnection->request(new eppInfoContactRequest($contactHandle));
+            /* @var $response eppInfoContactResponse */
             $contactData["name"]            = $response->getContactName();
             $contactData["city"]            = $response->getContactCity();
-            $contactData["country"]         = $response->getContactCountryCode();
-            $contactData["organization"]    = $response->getContactCompanyName();
+            $contactData["country"]         = $response->getContactCountrycode();
+            $contactData["organization"]    = $response->getContactCompanyname();
             $contactData["adress"]          = $response->getContactStreet();
             $contactData["region"]          = $response->getContactProvince();
             $contactData["postCode"]        = $response->getContactZipcode();

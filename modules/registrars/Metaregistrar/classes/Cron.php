@@ -4,12 +4,10 @@ namespace MetaregistrarModule\classes;
 
 class Cron {
     static function poll() {
+        $apiData        = Helpers::getApiData();
+        $apiConnection  = Api::getApiConnection($apiData);
+        $apiConnection->setTimeout(30);
         try {
-            $apiData        = Helpers::getApiData();
-            $apiConnection  = Api::getApiConnection($apiData);
-
-            $apiConnection->setTimeout(30);
-
             do {
                 set_time_limit(120);
                 $message = Poll::getMessage($apiConnection);

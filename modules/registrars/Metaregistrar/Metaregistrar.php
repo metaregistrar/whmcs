@@ -181,3 +181,22 @@ function Metaregistrar_ClientArea($params) {
     }
 }
 
+function Metaregistrar_GetRegistrarLock($params) {
+    try {
+
+        return \MetaregistrarModule\classes\Addon::getDomainLock($params);
+
+    } catch (Exception $e) {
+        return array('error' => $e->getMessage());
+    }
+}
+
+function Metaregistrar_SaveRegistrarLock($params) {
+    try {
+
+        return \MetaregistrarModule\classes\Addon::saveDomainLock($params);
+
+    } catch (Exception $e) {
+        return array('error' => $e->getMessage());
+    }
+}
