@@ -134,7 +134,7 @@ class Helpers {
         $row = $statement->fetch();
         $pdo->commit();
         
-        $domainData["expDate"] = $row["expirydate"];
+        $domainData["expirydate"] = $row["expirydate"];
         
         return $domainData;
     }

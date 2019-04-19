@@ -19,6 +19,10 @@ use \Metaregistrar\EPP\eppUpdateDomainRequest;
 use \Metaregistrar\EPP\metaregEppAutorenewRequest;
 use \Metaregistrar\EPP\eppCheckDomainRequest;
 use \Metaregistrar\EPP\eppCheckDomainResponse;
+use \Metaregistrar\EPP\metaregInfoDnsRequest;
+use \Metaregistrar\EPP\metaregInfoDnsResponse;
+use \Metaregistrar\EPP\metaregUpdateDnsRequest;
+use \Metaregistrar\EPP\metaregUpdateDnsResponse;
 
 class Domain {
     static function register($domainData, eppConnection $apiConnection) {
@@ -161,7 +165,7 @@ class Domain {
             $domainDataRemote["name"] = $domainData["name"];
             $domainDataRemote["period"] = $domain->getPeriod();
             $domainDataRemote["eppCode"] = $domain->getAuthorisationCode();
-            $domainDataRemote["expDate"] = substr($response->getDomainExpirationDate(),0,10);
+            $domainDataRemote["expirydate"] = substr($response->getDomainExpirationDate(),0,10);
             $domainDataRemote["statuses"] = $response->getDomainStatuses();
             return $domainDataRemote;
 
@@ -254,13 +258,98 @@ class Domain {
             if ($locked) {
                 $rem = null;
                 $add = new eppDomain($idna->encode($domainData["name"]));
-                $add->addStatus(eppDomain::STATUS_CLIENT_UPDATE_PROHIBITED);
+                $add->addStatus(eppDomain::STATUS_CLIENT_TRANSFER_PROHIBITED);
             } else {
                 $add = null;
                 $rem = new eppDomain($idna->encode($domainData["name"]));
-                $rem->addStatus(eppDomain::STATUS_CLIENT_UPDATE_PROHIBITED);
+                $rem->addStatus(eppDomain::STATUS_CLIENT_TRANSFER_PROHIBITED);
             }
             $apiConnection->request(new eppUpdateDomainRequest($domain, $add, $rem, null));
+        } catch (eppException $e) {
+            throw new \Exception($e->getMessage());
+        }
+    }
+
+    static function getDNS($domainData, eppConnection $apiConnection) {
+        try {
+            $apiConnection->useExtension('dns-ext-1.0');
+            $idna = new eppIDNA();
+            $domain = new eppDomain($idna->encode($domainData["name"]));
+            $result = $apiConnection->request(new metaregInfoDnsRequest($domain));
+            /* @var $result metaregInfoDnsResponse */
+            $dnsresponse = array();
+            foreach ($result->getContent() as $content) {
+                if (in_array($content['type'],['A','AAAA','MX','CNAME','SPF','TXT'])) {
+                    $dnsresponse[] = array('hostname'=>$content['name'],'type'=>$content['type'],'address'=>$content['content'],'priority'=>$content['priority']);
+                }
+            }
+            return $dnsresponse;
+        } catch (eppException $e) {
+            throw new \Exception($e->getMessage());
+        }
+    }
+
+    static function saveDNS($domainData, eppConnection $apiConnection, $dns) {
+        try {
+            $apiConnection->useExtension('dns-ext-1.0');
+            $idna = new eppIDNA();
+            $domain = new eppDomain($idna->encode($domainData["name"]));
+            $result = $apiConnection->request(new metaregInfoDnsRequest($domain));
+            /* @var $result metaregInfoDnsResponse */
+            $dnsresponse = array();
+            $add = array();
+            $rem = array();
+            foreach ($dns as $dnsrecord) {
+                if ($dnsrecord['priority']=='N/A') {
+                    $dnsrecord['priority']=0;
+                }
+                if ($dnsrecord['address']=='') {
+                    // This record must be removed
+                    $found = false;
+                    $foundcontent = '';
+                    foreach ($result->getContent() as $content) {
+                        if (($dnsrecord['hostname']==$content['name']) && ($dnsrecord['type']==$content['type']) && ($dnsrecord['priority']==$content['priority'])) {
+                            $found = true;
+                            $foundcontent = $content['content'];
+                        }
+                    }
+                    if ($found) {
+                        //logActivity("MetaregistrarDNS rem: ".implode(',',$dnsrecord), $_SESSION["uid"]);
+                        $rem[] = array('name'=>$dnsrecord['hostname'],'type'=>$dnsrecord['type'],'content'=>$foundcontent,'ttl'=>3600,'priority'=>$dnsrecord['priority']);
+                    }
+                } else {
+                    // Check if there are records to be added
+                    $found = false;
+                    foreach ($result->getContent() as $content) {
+                        if (($dnsrecord['hostname']==$content['name']) && ($dnsrecord['type']==$content['type']) && ($dnsrecord['address']==$content['content']) && ($dnsrecord['priority']==$content['priority'])) {
+                            $found = true;
+                        }
+                    }
+                    if (!$found) {
+                        //logActivity("MetaregistrarDNS add: ".implode(',',$dnsrecord), $_SESSION["uid"]);
+                        if (strpos(strtolower($dnsrecord['hostname']),strtolower($domainData["name"]))===false) {
+                            throw new \Exception("Hostname MUST contain the domain name ".$domainData['name']);
+                        }
+                        // In case of MXE, add MX record and A record
+                        if ($dnsrecord['type']=='MXE') {
+                            $add[] = array('name'=>'mail.'.$dnsrecord['hostname'],'type'=>'A','content'=>$dnsrecord['address'],'ttl'=>3600,'priority'=>0);
+                            $add[] = array('name'=>$dnsrecord['hostname'],'type'=>'MX','content'=>'mail.'.$dnsrecord['hostname'],'ttl'=>3600,'priority'=>10);
+                        } else {
+                            if ($dnsrecord['type']=='MX') {
+                                if ($dnsrecord['priority']=='') {
+                                    $dnsrecord['priority']=10;
+                                }
+                                $add[] = array('name'=>$dnsrecord['hostname'],'type'=>$dnsrecord['type'],'content'=>$dnsrecord['address'],'ttl'=>3600,'priority'=>$dnsrecord['priority']);
+                            } else {
+                                $add[] = array('name'=>$dnsrecord['hostname'],'type'=>$dnsrecord['type'],'content'=>$dnsrecord['address'],'ttl'=>3600,'priority'=>0);
+                            }
+                        }
+                    }
+                }
+            }
+            if ((count($add)>0) || (count($rem)>0)) {
+                $apiConnection->request(new metaregUpdateDnsRequest($domain, $add, $rem, null));
+            }
         } catch (eppException $e) {
             throw new \Exception($e->getMessage());
         }

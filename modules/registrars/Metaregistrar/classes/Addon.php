@@ -117,7 +117,7 @@ class Addon {
             Api::closeApiConnection($apiConnection);
 
             return array(
-                'expirydate' => $domainDataRemote["expDate"],
+                'expirydate' => $domainDataRemote["expirydate"],
                 'active' => (in_array("ok", $domainDataRemote["statuses"]))?true:false
             );
             
@@ -192,7 +192,7 @@ class Addon {
 
             return array(
                 'completed' => true,
-                'expirydate' => $domainDataRemote["expDate"],
+                'expirydate' => $domainDataRemote["expirydate"],
             );
             
         } catch (\Exception $e) {
@@ -213,7 +213,7 @@ class Addon {
 
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
-            $domainData["expDate"] = $domainDataRemote["expDate"];
+            $domainData["expirydate"] = $domainDataRemote["expirydate"];
 
             Domain::renew($domainData, $apiConnection);
 
@@ -454,8 +454,10 @@ class Addon {
                 throw new \Exception("Domain is not registered.");
             }
             if (Domain::isLocked($domainData,$apiConnection)) {
+                Api::closeApiConnection($apiConnection);
                 return 'locked';
             } else {
+                Api::closeApiConnection($apiConnection);
                 return 'unlocked';
             }
         } catch (\Exception $e) {
@@ -475,12 +477,46 @@ class Addon {
                 throw new \Exception("Domain is not registered.");
             }
             Domain::setDomainLock($domainData, $apiConnection, ($params['lockenabled']=='locked' ? true : false));
-
+            Api::closeApiConnection($apiConnection);
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
             throw $e;
         }
+    }
 
+    static function getDomainDNS($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
+        try {
+            $domainData         = Helpers::getDomainData($params);
+
+            if(!Domain::isRegistered($domainData, $apiConnection)) {
+                throw new \Exception("Domain is not registered.");
+            }
+            $dns = Domain::getDNS($domainData,$apiConnection);
+            Api::closeApiConnection($apiConnection);
+            return $dns;
+        } catch (\Exception $e) {
+            Api::closeApiConnection($apiConnection);
+            throw $e;
+        }
+    }
+
+    static function storeDomainDns($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
+        try {
+            $domainData         = Helpers::getDomainData($params);
+
+            if(!Domain::isRegistered($domainData, $apiConnection)) {
+                throw new \Exception("Domain is not registered.");
+            }
+            Domain::saveDNS($domainData, $apiConnection, $params['dnsrecords']);
+            Api::closeApiConnection($apiConnection);
+        } catch (\Exception $e) {
+            Api::closeApiConnection($apiConnection);
+            throw $e;
+        }
     }
 
     static function checkAvailability($params) {
