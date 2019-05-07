@@ -40,12 +40,17 @@ class Addon {
                 "Description" => "Enter the EPP API password of your Metaregistrar account",
                 "Default" => "",
             ),
+            "autoRenewMode" => array (
+                "FriendlyName" => "Auto renew domains",
+                "Type" => "yesno",
+                "Description" => "When selected, all created domain names will auto-renew automatically",
+                "Default" => 1,
+            ),
             "debugMode" => array (
                 "FriendlyName" => "Debug Mode",
                 "Type" => "yesno",
                 "Description" => "Tick to save API requests and responses in WHMCS module log",
             ),
-            
         );
     }
     
@@ -76,9 +81,12 @@ class Addon {
                 }
             }
             Domain::register($domainData, $apiConnection);
-            //$domainData["autorenew"]    = false;
-            //Domain::setAutorenew($domainData, $apiConnection);
-            
+
+            if (!$apiData["autoRenewMode"]) {
+                $domainData["autorenew"]    = false;
+                Domain::setAutorenew($domainData, $apiConnection);
+            }
+
             Api::closeApiConnection($apiConnection);
             
         } catch(\Exception $e) {  
@@ -447,6 +455,7 @@ class Addon {
     static function getDomainLock($params) {
         $apiData            = Helpers::getApiData();
         $apiConnection      = Api::getApiConnection($apiData);
+
         try {
             $domainData         = Helpers::getDomainData($params);
 

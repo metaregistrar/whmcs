@@ -9,10 +9,11 @@ class Api {
     static function getApiConnection($apiData){
         try  {
             $connection = new eppConnection();
-            $connection->setHostname($apiData["host"]);
-            $connection->setPort($apiData["port"]);
+            $connection->setHostname('ssl://eppl.metaregistrar.com');
+            $connection->setPort(7000);
             $connection->setUsername($apiData["username"]);
             $connection->setPassword($apiData["password"]);
+
             if($apiData["debugMode"]) {
                 $connection->enableWhmcsLogging();
             }
@@ -23,6 +24,7 @@ class Api {
             }
         } catch (eppException $e) {
             logActivity("MetaregistrarModule: ".$e->getMessage(), $_SESSION["uid"]);
+            throw new \Exception($e->getMessage());
         }
     }
     
@@ -33,6 +35,7 @@ class Api {
             }
         } catch (eppException $e) {
             logActivity("MetaregistrarModule: ".$e->getMessage(), $_SESSION["uid"]);
+            throw new \Exception($e->getMessage());
         }
     }
 }

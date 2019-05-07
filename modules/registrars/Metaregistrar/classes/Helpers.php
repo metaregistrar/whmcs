@@ -31,6 +31,7 @@ class Helpers {
             "port"      => 7000,
             "username"  => $apiData["apiUsername"],
             "password"  => $apiData["apiPassword"],
+            "autoRenewMode" => ($apiData["autoRenewMode"]=="on")?true:false,
             "debugMode" => ($apiData["debugMode"]=="on")?true:false
         );
     }

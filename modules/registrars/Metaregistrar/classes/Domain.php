@@ -36,7 +36,6 @@ class Domain {
             foreach($domainData["nameservers"] as $nameserver) {
                 $domain->addHost(new eppHost($nameserver));
             }
-            
             $domain->setPeriod($domainData["period"]);
             $domain->setPeriodUnit(eppDomain::DOMAIN_PERIOD_UNIT_Y);
             $domain->setAuthorisationCode($domainData["authorisationCode"]);
@@ -93,7 +92,7 @@ class Domain {
             $domain->setPeriod($domainData["period"]);
             $domain->setPeriodUnit(eppDomain::DOMAIN_PERIOD_UNIT_Y);
             
-            $apiConnection->request(new eppRenewRequest($domain, $domainData["expDate"]));
+            $apiConnection->request(new eppRenewRequest($domain, $domainData["expirydate"]));
 
         } catch (eppException $e) {
             throw new \Exception($e->getMessage());
