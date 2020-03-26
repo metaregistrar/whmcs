@@ -326,12 +326,7 @@ class eppDomain {
      * @return void
      */
     public function setAuthorisationCode($authorisationCode) {
-        if ($authorisationCode) {
-            $this->authorisationCode = htmlspecialchars($authorisationCode, ENT_COMPAT, "UTF-8");
-        } else {
-            $this->authorisationCode = $authorisationCode;
-        }
-
+        $this->authorisationCode = $authorisationCode;
     }
 
     /**
@@ -348,7 +343,7 @@ class eppDomain {
      * @return void
      */
     public function setPassword($password) {
-        $this->authorisationCode = htmlspecialchars($password, ENT_COMPAT, "UTF-8");
+        $this->authorisationCode =$password;
     }
 
     /**
