@@ -6,12 +6,11 @@ if (!defined("WHMCS")) {
 }
 
 function autoloader($class) {
-    define(DS, DIRECTORY_SEPARATOR);
     $file = str_replace(__NAMESPACE__."\\", '', $class);
-    $file = str_replace("\\", DS, $file);
+    $file = str_replace("\\", DIRECTORY_SEPARATOR, $file);
     $file = $file.".php";
     
-    $absolutePath = dirname(__FILE__).DS.$file;
+    $absolutePath = dirname(__FILE__).DIRECTORY_SEPARATOR.$file;
     if(file_exists($absolutePath)) {
         include_once $file;
     }
