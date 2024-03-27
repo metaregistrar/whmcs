@@ -240,7 +240,7 @@ class Domain {
             $result = $apiConnection->request(new eppInfoDomainRequest($domain));
             /* @var $result eppInfoDomainResponse */
             foreach ($result->getDomainStatuses() as $status) {
-                if ($status == 'clientTransferProhibited') {
+                if ($status == eppDomain::STATUS_CLIENT_TRANSFER_PROHIBITED) {
                     return true;
                 }
             }
