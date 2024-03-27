@@ -9,25 +9,20 @@ class Addon {
 
 
     static function getConfig($params) {
-        try {
-            $pdo = Capsule::connection()->getPdo();
-            $pdo->beginTransaction();
-            $query =  " CREATE TABLE IF NOT EXISTS MetaregistrarPollData("
-                . "     id int PRIMARY KEY NOT NULL AUTO_INCREMENT, "
-                . "     domainId int NOT NULL, "
-                . "     messageId int NOT NULL, "
-                . "     domain VARCHAR(255) NOT NULL, "
-                . "     description VARCHAR(255) NOT NULL, "
-                . "     date DATE NOT NULL "
-                . " ) DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;";
 
-            $statement = $pdo->prepare($query);
-            $statement->execute();
-            $pdo->commit();
+        $pdo = Capsule::connection()->getPdo();
+        $query =  " CREATE TABLE IF NOT EXISTS MetaregistrarPollData("
+            . "     id int PRIMARY KEY NOT NULL AUTO_INCREMENT, "
+            . "     domainId int NOT NULL, "
+            . "     messageId int NOT NULL, "
+            . "     domain VARCHAR(255) NOT NULL, "
+            . "     description VARCHAR(255) NOT NULL, "
+            . "     date DATE NOT NULL "
+            . " ) DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;";
 
-        } catch (\PDOException $e) {
-            throw new \Exception($e->getMessage());
-        }
+        $statement = $pdo->prepare($query);
+        $statement->execute();
+
 
         return array(
             "apiUsername" => array (
