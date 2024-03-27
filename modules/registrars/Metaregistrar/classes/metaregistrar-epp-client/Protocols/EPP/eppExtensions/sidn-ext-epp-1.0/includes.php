@@ -3,6 +3,10 @@ $this->addExtension('sidn-ext-epp', 'http://rxsd.domain-registry.nl/sidn-ext-epp
 
 include_once(dirname(__FILE__) . '/eppResponses/sidnEppResponse.php');
 
+// Org field is used by SIDN as organisational department
+include_once(dirname(__FILE__) . '/eppRequests/sidnEppContactPostalInfo.php');
+$this->addCommandResponse('Metaregistrar\EPP\sidnEppContactPostalInfo', 'Metaregistrar\EPP\eppContactPostalInfo');
+
 // Create contact with additional parameters
 include_once(dirname(__FILE__) . '/eppRequests/sidnEppCreateContactRequest.php');
 $this->addCommandResponse('Metaregistrar\EPP\sidnEppCreateContactRequest', 'Metaregistrar\EPP\eppCreateContactResponse');
@@ -11,7 +15,6 @@ $this->addCommandResponse('Metaregistrar\EPP\sidnEppCreateContactRequest', 'Meta
 include_once(dirname(__FILE__) . '/eppRequests/sidnEppRenewRequest.php');
 $this->addCommandResponse('Metaregistrar\EPP\sidnEppRenewRequest', 'Metaregistrar\EPP\eppRenewResponse');
 
-
 include_once(dirname(__FILE__) . '/eppRequests/sidnEppPollRequest.php');
 include_once(dirname(__FILE__) . '/eppResponses/sidnEppPollResponse.php');
 $this->addCommandResponse('Metaregistrar\EPP\sidnEppPollRequest', 'Metaregistrar\EPP\sidnEppPollResponse');
@@ -19,5 +22,9 @@ $this->addCommandResponse('Metaregistrar\EPP\sidnEppPollRequest', 'Metaregistrar
 include_once(dirname(__FILE__) . '/eppResponses/sidnEppCheckResponse.php');
 $this->addCommandResponse('Metaregistrar\EPP\eppCheckRequest', 'Metaregistrar\EPP\sidnEppCheckResponse');
 
+include_once(dirname(__FILE__) . '/eppRequests/sidnEppInfoDomainRequest.php');
 include_once(dirname(__FILE__) . '/eppResponses/sidnEppInfoDomainResponse.php');
-$this->addCommandResponse('Metaregistrar\EPP\eppInfoDomainRequest', 'Metaregistrar\EPP\sidnEppInfoDomainResponse');
+$this->addCommandResponse('Metaregistrar\EPP\sidnEppInfoDomainRequest', 'Metaregistrar\EPP\sidnEppInfoDomainResponse');
+
+include_once(dirname(__FILE__) . '/eppExceptions/sidnEppException.php');
+$this->addException('Metaregistrar\EPP\sidnEppException');

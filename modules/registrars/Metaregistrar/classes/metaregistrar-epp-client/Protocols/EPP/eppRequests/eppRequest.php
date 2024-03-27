@@ -54,6 +54,12 @@ class eppRequest extends \DOMDocument {
      * @var bool
      */
     private $namespacesinroot = true;
+    /**
+     * If true, password are put into CDATA sections
+     * If false, passwords will be in normal XML
+     * @var bool
+     */
+    private $usecdata = false;
 
     function __construct() {
         $this->sessionid = uniqid();
@@ -79,6 +85,17 @@ class eppRequest extends \DOMDocument {
      */
     public function rootNamespaces() {
         return $this->namespacesinroot;
+    }
+
+    /**
+     * @param bool $setting
+     */
+    public function setUseCdata($setting) {
+        $this->usecdata = $setting;
+    }
+
+    public function useCdata() {
+        return $this->usecdata;
     }
 
     /**
@@ -180,17 +197,13 @@ class eppRequest extends \DOMDocument {
     public function addNamespaces($namespaces) {
         if (is_array($namespaces)) {
             foreach ($namespaces as $namespace => $xmlns) {
-                $this->getEpp()->setAttribute('xmlns:' . $xmlns, $namespace);
-                /*$object = $xmlns.'object';
-                if ($object == 'secDNSobject')
-                {
-                    // ADD SECDNS to domain string
-                    $object = 'domainobject';
+                if (strpos($namespace,'urn')!==false) {
+                    $this->getEpp()->setAttribute('xmlns:' . $xmlns, $namespace);
+                } else {
+                    if ($this->rootNamespaces()) {
+                        $this->getEpp()->setAttribute('xmlns:' . $xmlns, $namespace);
+                    }
                 }
-                if (property_exists($this, $object) && ($this->$object))
-                {
-                    $this->$object->setAttribute('xmlns:'.$xmlns,$namespace);
-                }*/
             }
         }
     }

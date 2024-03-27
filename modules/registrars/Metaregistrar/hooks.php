@@ -9,9 +9,7 @@ require_once 'classes/metaregistrar-epp-client/autoloader.php';
 
 function Hook_Metaregistrar_AdminAreaTable($params) {
     try {
-        
         return \MetaregistrarModule\classes\Hooks::adminAreaTable();
-        
     } catch (Exception $e) {
         logActivity("MetaregistrarModule: ".$e->getMessage(), $_SESSION["uid"]);
     }

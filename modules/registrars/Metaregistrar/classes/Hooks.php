@@ -4,9 +4,9 @@ namespace MetaregistrarModule\classes;
 
 class Hooks {
     static function adminAreaTable() {
-        
+
         if(basename($_SERVER['PHP_SELF']) != "clientsdomains.php") {
-            return;
+            return null;
         }
         
         if(!empty($_GET["id"])) {
@@ -18,13 +18,12 @@ class Hooks {
         }
         
         if(!Helpers::isMetaregistrarDomain($domainId)) {
-            return;
+            return null;
         }
         
         $table = Helpers::createPollDataTable($domainId);
         
-        $html = ''
-        . ' <tr>'
+        $html = ' <tr>'
         . '     <td class=\'fieldlabel\'>'
         . '         Poll Messages'
         . '     </td>'
@@ -33,8 +32,7 @@ class Hooks {
         . '     </td>'
         . ' </tr>';
         
-        $script = ''
-        . ' <script>'
+        $script = ' <script>'
         . '     var handle = $("#profileContent").children("form").eq(0).children().eq(1).children().eq(0).children().eq(13);'
         . '     handle.after("'.$html.'");'
         . ' </script>'

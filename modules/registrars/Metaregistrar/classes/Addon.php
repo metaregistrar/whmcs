@@ -9,10 +9,10 @@ class Addon {
 
 
     static function getConfig($params) {
-        
-        $pdo = Capsule::connection()->getPdo();
-        $pdo->beginTransaction();
-        $query =  " CREATE TABLE IF NOT EXISTS MetaregistrarPollData("
+        try {
+            $pdo = Capsule::connection()->getPdo();
+            $pdo->beginTransaction();
+            $query =  " CREATE TABLE IF NOT EXISTS MetaregistrarPollData("
                 . "     id int PRIMARY KEY NOT NULL AUTO_INCREMENT, "
                 . "     domainId int NOT NULL, "
                 . "     messageId int NOT NULL, "
@@ -20,11 +20,15 @@ class Addon {
                 . "     description VARCHAR(255) NOT NULL, "
                 . "     date DATE NOT NULL "
                 . " ) DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;";
-        
-        $statement = $pdo->prepare($query);
-        $statement->execute();
-        $pdo->commit();
-        
+
+            $statement = $pdo->prepare($query);
+            $statement->execute();
+            $pdo->commit();
+
+        } catch (\PDOException $e) {
+            throw new \Exception($e->getMessage());
+        }
+
         return array(
             "apiUsername" => array (
                 "FriendlyName" => "EPP Username",
@@ -50,6 +54,7 @@ class Addon {
                 "FriendlyName" => "Debug Mode",
                 "Type" => "yesno",
                 "Description" => "Tick to save API requests and responses in WHMCS module log",
+                "Default" => 0,
             ),
         );
     }

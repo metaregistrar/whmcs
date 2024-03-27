@@ -13,11 +13,11 @@ class noridEppTransferRequest extends eppTransferRequest {
 
     function __construct($operation, $object) {
         parent::__construct($operation, $object);
-        $remove = $this->getElementsByTagName('command');
-        foreach ($remove as $node) {
-            $node->parentNode->removeChild($node);
-        }
         if ($operation == self::OPERATION_EXECUTE) {
+            $remove = $this->getElementsByTagName('command');
+            foreach ($remove as $node) {
+                $node->parentNode->removeChild($node);
+            }
             if ($object instanceof noridEppDomain) {
                 $this->setExtDomainExecute($object);
             } else {
@@ -38,16 +38,17 @@ class noridEppTransferRequest extends eppTransferRequest {
 
         $this->domainobject->appendChild($this->createElement('domain:name', $domain->getDomainname()));
 
-        if (strlen($domain->getAuthorisationCode())) {
-            $authinfo = $this->createElement('domain:authInfo');
-            $authinfo->appendChild($this->createElement('domain:pw', $domain->getAuthorisationCode()));
-            $this->domainobject->appendChild($authinfo);
-        }
-
         if ($domain->getPeriod()) {
             $domainperiod = $this->createElement('domain:period', $domain->getPeriod());
             $domainperiod->setAttribute('unit', eppDomain::DOMAIN_PERIOD_UNIT_Y);
             $this->domainobject->appendChild($domainperiod);
+        }
+
+        if (strlen($domain->getAuthorisationCode())) {
+            $authinfo = $this->createElement('domain:authInfo');
+            $pw = $authinfo->appendChild($this->createElement('domain:pw'));
+            $pw->appendChild($this->createCDATASection($domain->getAuthorisationCode()));
+            $this->domainobject->appendChild($authinfo);
         }
 
         $transfer->appendChild($this->domainobject);

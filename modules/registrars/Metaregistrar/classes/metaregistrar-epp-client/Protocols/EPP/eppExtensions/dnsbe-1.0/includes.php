@@ -33,5 +33,22 @@ include_once(dirname(__FILE__) . '/eppRequests/dnsbeEppDeleteDomainRequest.php')
 include_once(dirname(__FILE__) . '/eppResponses/dnsbeEppDeleteDomainResponse.php');
 $this->addCommandResponse('Metaregistrar\EPP\dnsbeEppDeleteDomainRequest', 'Metaregistrar\EPP\dnsbeEppDeleteDomainResponse');
 
+include_once(dirname(__FILE__) . '/eppRequests/dnsbeEppUndeleteDomainRequest.php');
+include_once(dirname(__FILE__) . '/eppResponses/dnsbeEppUndeleteDomainResponse.php');
+$this->addCommandResponse('Metaregistrar\EPP\dnsbeEppUndeleteDomainRequest', 'Metaregistrar\EPP\dnsbeEppUndeleteDomainResponse');
 
+include_once(dirname(__FILE__) . '/eppRequests/dnsbeEppReactivateDomainRequest.php');
+include_once(dirname(__FILE__) . '/eppResponses/dnsbeEppReactivateDomainResponse.php');
+$this->addCommandResponse('Metaregistrar\EPP\dnsbeEppReactivateDomainRequest', 'Metaregistrar\EPP\dnsbeEppReactivateDomainResponse');
 
+include_once(dirname(__FILE__) . '/eppRequests/dnsbeEppInfoContactRequest.php');
+include_once(dirname(__FILE__) . '/eppResponses/dnsbeEppInfoContactResponse.php');
+$this->addCommandResponse('Metaregistrar\EPP\dnsbeEppInfoContactRequest', 'Metaregistrar\EPP\dnsbeEppInfoContactResponse');
+
+include_once(dirname(__FILE__) . '/eppRequests/dnsbeEppCheckDomainRequest.php');
+include_once(dirname(__FILE__) . '/eppResponses/dnsbeEppCheckDomainResponse.php');
+$this->addCommandResponse('Metaregistrar\EPP\dnsbeEppCheckDomainRequest', 'Metaregistrar\EPP\dnsbeEppCheckDomainResponse');
+
+include_once(dirname(__FILE__) . '/eppRequests/dnsbeEppUpdateDomainRequest.php');
+include_once(dirname(__FILE__) . '/eppResponses/dnsbeEppUpdateDomainResponse.php');
+$this->addCommandResponse('Metaregistrar\EPP\dnsbeEppUpdateDomainRequest', 'Metaregistrar\EPP\dnsbeEppUpdateDomainResponse');
