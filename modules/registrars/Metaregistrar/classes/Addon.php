@@ -19,7 +19,6 @@ class Addon {
             . "     description VARCHAR(255) NOT NULL, "
             . "     date DATE NOT NULL "
             . " ) DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;";
-
         $statement = $pdo->prepare($query);
         $statement->execute();
 
