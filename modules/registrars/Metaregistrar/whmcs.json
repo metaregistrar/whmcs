@@ -1,0 +1,24 @@
+{
+  "schema": "1.0",
+  "type": "whmcs-registrars",
+  "name": "Metaregistrar",
+  "license": "proprietary",
+  "category": "domains",
+  "description": {
+    "name": "Metaregistrar BV",
+    "tagline": "Domain name registration and hosting services."
+  },
+  "logo": {
+    "filename": "logo.jpg"
+  },
+  "support": {
+    "homepage": "https:\/\/www.metaregistrar.com\/",
+    "docs_url": "https:\/\/support.metaregistrar.com\/"
+  },
+  "authors": [
+    {
+      "name": "Metaregistrar BV",
+      "homepage": "https:\/\/www.metaregistrar.com\/"
+    }
+  ]
+}
