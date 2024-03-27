@@ -14,9 +14,9 @@ class Api {
             $connection->setUsername($apiData["username"]);
             $connection->setPassword($apiData["password"]);
 
-            if($apiData["debugMode"]) {
-                $connection->enableWhmcsLogging();
-            }
+            //if($apiData["debugMode"]) {
+            //    $connection->enableLogging();
+            //}
             if($connection->login()) {
                 return $connection;
             } else {
