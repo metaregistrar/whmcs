@@ -164,7 +164,7 @@ class Domain {
             $domainDataRemote["name"] = $domainData["name"];
             $domainDataRemote["period"] = $domain->getPeriod();
             $domainDataRemote["eppCode"] = $domain->getAuthorisationCode();
-            $domainDataRemote["expirydate"] = substr($response->getDomainExpirationDate(),0,10);
+            $domainDataRemote["expirydate"] = date("Y-m-d", strtotime($response->getDomainExpirationDate()));
             $domainDataRemote["statuses"] = $response->getDomainStatuses();
             return $domainDataRemote;
 

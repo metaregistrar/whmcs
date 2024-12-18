@@ -125,7 +125,9 @@ class Addon {
 
             return array(
                 'expirydate' => $domainDataRemote["expirydate"],
-                'active' => (in_array("ok", $domainDataRemote["statuses"]))?true:false
+                'active' => (in_array("ok", $domainDataRemote["statuses"]))?true:false,
+                'cancelled' => (in_array("pendingDelete", $domainDataRemote["statuses"]))?true:false,
+                'transferredAway' => false
             );
             
         } catch (\Exception $e) {
