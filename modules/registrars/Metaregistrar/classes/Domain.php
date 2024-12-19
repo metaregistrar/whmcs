@@ -11,6 +11,7 @@ use \Metaregistrar\EPP\eppHost;
 use \Metaregistrar\EPP\eppCreateDomainRequest;
 use \Metaregistrar\EPP\eppDeleteDomainRequest;
 use \Metaregistrar\EPP\eppTransferRequest;
+use Metaregistrar\EPP\metaregCreateDnsRequest;
 use \Metaregistrar\EPP\metaregEppTransferExtendedRequest;
 use \Metaregistrar\EPP\eppRenewRequest;
 use \Metaregistrar\EPP\eppInfoDomainRequest;
@@ -276,10 +277,10 @@ class Domain {
             $domain = new eppDomain($idna->encode($domainData["name"]));
             $result = $apiConnection->request(new metaregInfoDnsRequest($domain));
             /* @var $result metaregInfoDnsResponse */
-            $dnsresponse = array();
+            $dnsresponse = [];
             foreach ($result->getContent() as $content) {
                 if (in_array($content['type'],['A','AAAA','MX','CNAME','SPF','TXT'])) {
-                    $dnsresponse[] = array('hostname'=>$content['name'],'type'=>$content['type'],'address'=>$content['content'],'priority'=>$content['priority']);
+                    $dnsresponse[] = ['hostname'=>$content['name'],'type'=>$content['type'],'address'=>$content['content'],'priority'=>$content['priority']];
                 }
             }
             return $dnsresponse;
@@ -294,63 +295,109 @@ class Domain {
             $idna = new eppIDNA();
             $domain = new eppDomain($idna->encode($domainData["name"]));
             $result = $apiConnection->request(new metaregInfoDnsRequest($domain));
-            /* @var $result metaregInfoDnsResponse */
-            $dnsresponse = array();
-            $add = array();
-            $rem = array();
-            foreach ($dns as $dnsrecord) {
-                if ($dnsrecord['priority']=='N/A') {
-                    $dnsrecord['priority']=0;
-                }
-                if ($dnsrecord['address']=='') {
-                    // This record must be removed
-                    $found = false;
-                    $foundcontent = '';
-                    foreach ($result->getContent() as $content) {
-                        if (($dnsrecord['hostname']==$content['name']) && ($dnsrecord['type']==$content['type']) && ($dnsrecord['priority']==$content['priority'])) {
-                            $found = true;
-                            $foundcontent = $content['content'];
+            logActivity("HERE");
+            logActivity($result->getResultMessage());
+            if ($result->getResultCode()==1000) {
+                //logActivity("MetaregistrarDNS exists");
+                /* @var $result metaregInfoDnsResponse */
+                $dnsresponse = array();
+                $add = array();
+                $rem = array();
+                foreach ($dns as $dnsrecord) {
+                    // Check if the domain name is present in the DNS record
+                    if ($dnsrecord['hostname'] == '') {
+                        $dnsrecord['hostname'] = $domain->getDomainname();
+                    } else {
+                        if (strpos($dnsrecord['hostname'], $domain->getDomainname()) === false) {
+                            $dnsrecord['hostname'] = $dnsrecord['hostname'] . '.' . $domain->getDomainname();
                         }
                     }
-                    if ($found) {
-                        //logActivity("MetaregistrarDNS rem: ".implode(',',$dnsrecord), $_SESSION["uid"]);
-                        $rem[] = array('name'=>$dnsrecord['hostname'],'type'=>$dnsrecord['type'],'content'=>$foundcontent,'ttl'=>3600,'priority'=>$dnsrecord['priority']);
+                    if ($dnsrecord['priority'] == 'N/A') {
+                        $dnsrecord['priority'] = 0;
                     }
-                } else {
-                    // Check if there are records to be added
-                    $found = false;
-                    foreach ($result->getContent() as $content) {
-                        if (($dnsrecord['hostname']==$content['name']) && ($dnsrecord['type']==$content['type']) && ($dnsrecord['address']==$content['content']) && ($dnsrecord['priority']==$content['priority'])) {
-                            $found = true;
+                    if ($dnsrecord['address'] == '') {
+                        // This record must be removed
+                        $found = false;
+                        $foundcontent = '';
+                        foreach ($result->getContent() as $content) {
+                            if (($dnsrecord['hostname'] == $content['name']) && ($dnsrecord['type'] == $content['type']) && ($dnsrecord['priority'] == $content['priority'])) {
+                                $found = true;
+                                $foundcontent = $content['content'];
+                            }
                         }
-                    }
-                    if (!$found) {
-                        //logActivity("MetaregistrarDNS add: ".implode(',',$dnsrecord), $_SESSION["uid"]);
-                        if (strpos(strtolower($dnsrecord['hostname']),strtolower($domainData["name"]))===false) {
-                            throw new \Exception("Hostname MUST contain the domain name ".$domainData['name']);
+                        if ($found) {
+                            //logActivity("MetaregistrarDNS rem: ".implode(',',$dnsrecord), $_SESSION["uid"]);
+                            $rem[] = array('name' => $dnsrecord['hostname'], 'type' => $dnsrecord['type'], 'content' => $foundcontent, 'ttl' => 3600, 'priority' => $dnsrecord['priority']);
                         }
-                        // In case of MXE, add MX record and A record
-                        if ($dnsrecord['type']=='MXE') {
-                            $add[] = array('name'=>'mail.'.$dnsrecord['hostname'],'type'=>'A','content'=>$dnsrecord['address'],'ttl'=>3600,'priority'=>0);
-                            $add[] = array('name'=>$dnsrecord['hostname'],'type'=>'MX','content'=>'mail.'.$dnsrecord['hostname'],'ttl'=>3600,'priority'=>10);
-                        } else {
-                            if ($dnsrecord['type']=='MX') {
-                                if ($dnsrecord['priority']=='') {
-                                    $dnsrecord['priority']=10;
-                                }
-                                $add[] = array('name'=>$dnsrecord['hostname'],'type'=>$dnsrecord['type'],'content'=>$dnsrecord['address'],'ttl'=>3600,'priority'=>$dnsrecord['priority']);
+                    } else {
+                        // Check if there are records to be added
+                        $found = false;
+                        //logActivity("MetaregistrarDNS compare dnsrecord: ".implode(',',$dnsrecord), $_SESSION["uid"]);
+                        foreach ($result->getContent() as $content) {
+                            //logActivity("MetaregistrarDNS compare with: ".implode(',',$content), $_SESSION["uid"]);
+                            if ($content['priority'] == '') {
+                                $content['priority'] = 0;
+                            }
+                            if (($dnsrecord['hostname'] == $content['name']) && ($dnsrecord['type'] == $content['type']) && ($dnsrecord['address'] == $content['content']) && ($dnsrecord['priority'] == $content['priority'])) {
+                                $found = true;
+                            }
+                        }
+                        if (!$found) {
+                            //logActivity("MetaregistrarDNS add: ".implode(',',$dnsrecord), $_SESSION["uid"]);
+                            if (strpos(strtolower($dnsrecord['hostname']), strtolower($domainData["name"])) === false) {
+                                throw new \Exception("Hostname MUST contain the domain name " . $domainData['name']);
+                            }
+                            // In case of MXE, add MX record and A record
+                            if ($dnsrecord['type'] == 'MXE') {
+                                $add[] = array('name' => 'mail.' . $dnsrecord['hostname'], 'type' => 'A', 'content' => $dnsrecord['address'], 'ttl' => 3600, 'priority' => 0);
+                                $add[] = array('name' => $dnsrecord['hostname'], 'type' => 'MX', 'content' => 'mail.' . $dnsrecord['hostname'], 'ttl' => 3600, 'priority' => 10);
                             } else {
-                                $add[] = array('name'=>$dnsrecord['hostname'],'type'=>$dnsrecord['type'],'content'=>$dnsrecord['address'],'ttl'=>3600,'priority'=>0);
+                                if ($dnsrecord['type'] == 'MX') {
+                                    if ($dnsrecord['priority'] == '') {
+                                        $dnsrecord['priority'] = 10;
+                                    }
+                                    $add[] = array('name' => $dnsrecord['hostname'], 'type' => $dnsrecord['type'], 'content' => $dnsrecord['address'], 'ttl' => 3600, 'priority' => $dnsrecord['priority']);
+                                } else {
+                                    $add[] = array('name' => $dnsrecord['hostname'], 'type' => $dnsrecord['type'], 'content' => $dnsrecord['address'], 'ttl' => 3600, 'priority' => 0);
+                                }
                             }
                         }
                     }
                 }
-            }
-            if ((count($add)>0) || (count($rem)>0)) {
-                $apiConnection->request(new metaregUpdateDnsRequest($domain, $add, $rem, null));
+                //logActivity("DNS ADD: ".json_encode($add));
+                //logActivity("DNS REM: ".json_encode($rem));
+                if ((count($add) > 0) || (count($rem) > 0)) {
+                    $apiConnection->request(new metaregUpdateDnsRequest($domain, $add, $rem, null));
+                }
             }
         } catch (eppException $e) {
-            throw new \Exception($e->getMessage());
+            if ($e->getCode() == 2303) {
+                // Domain not on DNS yet, create it!
+                //logActivity("MetaregistrarDNS does not exist");
+                $add = array();
+                foreach ($dns as $dnsrecord) {
+                    if ($dnsrecord['hostname']=='') {
+                        $dnsrecord['hostname'] = $domain->getDomainname();
+                    } else {
+                        if (strpos($dnsrecord['hostname'],$domain->getDomainname())===false) {
+                            $dnsrecord['hostname'] = $dnsrecord['hostname'].'.'.$domain->getDomainname();
+                        }
+                    }
+                    if ($dnsrecord['type']=='MX') {
+                        if ($dnsrecord['priority']=='') {
+                            $dnsrecord['priority']=10;
+                        }
+                        $add[] = array('name'=>$dnsrecord['hostname'],'type'=>$dnsrecord['type'],'content'=>$dnsrecord['address'],'ttl'=>3600,'priority'=>$dnsrecord['priority']);
+                    } else {
+                        $add[] = array('name'=>$dnsrecord['hostname'],'type'=>$dnsrecord['type'],'content'=>$dnsrecord['address'],'ttl'=>3600,'priority'=>0);
+                    }
+                }
+                $apiConnection->request(new metaregCreateDnsRequest($domain,$add));
+                return null;
+            } else {
+                //logActivity("ERROR INFODNS: ".$e->getMessage());
+                throw new \Exception($e->getMessage());
+            }
         }
     }
 }
