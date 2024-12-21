@@ -321,6 +321,8 @@ class Addon {
             Domain::updateNameservers($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
+            $returnArray = array("success"=>true);
+            return $returnArray;
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
@@ -337,6 +339,9 @@ class Addon {
             Host::register($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
+
+            $returnArray = array("success"=>true);
+            return $returnArray;
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
@@ -353,6 +358,9 @@ class Addon {
             Host::delete($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
+
+            $returnArray = array("success"=>true);
+            return $returnArray;
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
@@ -369,6 +377,9 @@ class Addon {
             Host::update($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
+
+            $returnArray = array("success"=>true);
+            return $returnArray;
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
@@ -578,7 +589,10 @@ class Addon {
         . ' <script src=\'//code.jquery.com/ui/1.11.4/jquery-ui.js\'></script>'
         . ' <script src=\'modules/registrars/Metaregistrar/templates/js/clientarea.js\'></script>'
         . ' <link href=\'//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css\' rel=\'stylesheet\' type=\'text/css\'>';
-        
+        $html = '<h3></h3><div></div>'
+            . ' <script src=\'//code.jquery.com/ui/1.11.4/jquery-ui.js\'></script>'
+            . ' <script src=\'modules/registrars/Metaregistrar/templates/js/clientarea.js\'></script>'
+            . ' <link href=\'//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css\' rel=\'stylesheet\' type=\'text/css\'>';
         return $html;
     }
 }

@@ -9,6 +9,32 @@ use WHMCS\Domains\DomainLookup\SearchResult;
 require_once 'Autoloader.php';
 require_once 'classes/metaregistrar-epp-client/autoloader.php';
 
+function Metaregistrar_MetaData()
+{
+    return array(
+        'DisplayName' => 'Metaregistrar BV',
+        'APIVersion' => '1.1',
+    );
+}
+
+
+
+/*
+function Metaregistrar_ClientAreaCustomButtonArray()
+{
+    return array(
+        'Menu function' => 'MenuFunction',
+    );
+}
+
+function Metaregistrar_MenuFunctio ()
+{
+    return array(
+        'Menu function' => 'menufunction',
+    );
+}
+*/
+
 function Metaregistrar_getConfigArray($params) {
     try {
         return \MetaregistrarModule\classes\Addon::getConfig($params);
@@ -142,6 +168,18 @@ function Metaregistrar_CheckAvailability($params) {
         return array('error' => $e->getMessage());
     }
 }
+
+/*
+ * function Metaregistrar_ClientArea($params)
+{
+    $output = '
+        <div class="alert alert-info">
+            Your custom HTML output goes here...
+        </div>
+    ';
+    return $output;
+}
+ */
 
 function Metaregistrar_ClientArea($params) {
     try {
