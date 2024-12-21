@@ -13,6 +13,9 @@ class Api {
             $connection->setPort(7000);
             $connection->setUsername($apiData["username"]);
             $connection->setPassword($apiData["password"]);
+            $connection->useExtension('dns-ext-1.0');
+            $connection->useExtension('secDNS-1.1');
+            $connection->useExtension('command-ext-1.0');
 
             //if($apiData["debugMode"]) {
             //    $connection->enableLogging();

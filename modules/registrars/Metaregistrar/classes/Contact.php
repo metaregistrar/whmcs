@@ -80,7 +80,6 @@ class Contact {
     static function addProperties($contactData, eppConnection $apiConnection) {
         try {
             $contactHandle = new eppContactHandle($contactData["id"]);
-            $apiConnection->useExtension('command-ext-1.0');
             
             $request    = new metaregEppUpdateContactRequest($contactHandle, null, null, null);
             foreach($contactData["properties"] as $propertyName => $propertyValue) {

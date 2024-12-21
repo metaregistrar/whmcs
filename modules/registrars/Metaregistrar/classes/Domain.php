@@ -60,27 +60,32 @@ class Domain {
     }
     
     static function transfer($domainData, eppConnection $apiConnection) {
+        logActivity("begin of transfer request");
         try {
+            logActivity("set domain");
             $domain = new eppDomain($domainData["name"]);
+            logActivity("adding handles");
             $domain->setRegistrant(new eppContactHandle($domainData["registrantId"],    eppContactHandle::CONTACT_TYPE_REGISTRANT));
             $domain->addContact(new eppContactHandle($domainData["adminId"],            eppContactHandle::CONTACT_TYPE_ADMIN));
             $domain->addContact(new eppContactHandle($domainData["techId"],             eppContactHandle::CONTACT_TYPE_TECH));
             $domain->addContact(new eppContactHandle($domainData["billingId"],          eppContactHandle::CONTACT_TYPE_BILLING));
-            
+            logActivity("adding nameservers");
             foreach($domainData["nameservers"] as $nameserver) {
                 $domain->addHost(new eppHost($nameserver));
             }
-            
+            logActivity("setting period");
             $domain->setPeriod($domainData["period"]);
             $domain->setPeriodUnit(eppDomain::DOMAIN_PERIOD_UNIT_Y);
+            logActivity("setting authcode");
             $domain->setAuthorisationCode($domainData["eppCode"]);
             
-            $apiConnection->useExtension('command-ext-1.0');
-            
+
+            logActivity("starting the transfer");
             $apiConnection->request(new metaregEppTransferExtendedRequest(eppTransferRequest::OPERATION_REQUEST,$domain));
         
             
         } catch (eppException $e) {
+            logActivity("TRANSFER ERROR: ".$e->getMessage());
             throw new \Exception($e->getMessage());
         }
     }
@@ -134,7 +139,6 @@ class Domain {
             $idna = new eppIDNA();
             
             $domain = new eppDomain($idna->encode($domainData["name"]));
-            $apiConnection->useExtension('command-ext-1.0');
             $apiConnection->request(new metaregEppAutorenewRequest($domain, $domainData["autorenew"]));
             
         } catch (eppException $e) {
@@ -272,7 +276,6 @@ class Domain {
 
     static function getDNS($domainData, eppConnection $apiConnection) {
         try {
-            $apiConnection->useExtension('dns-ext-1.0');
             $idna = new eppIDNA();
             $domain = new eppDomain($idna->encode($domainData["name"]));
             $result = $apiConnection->request(new metaregInfoDnsRequest($domain));
@@ -291,12 +294,9 @@ class Domain {
 
     static function saveDNS($domainData, eppConnection $apiConnection, $dns) {
         try {
-            $apiConnection->useExtension('dns-ext-1.0');
             $idna = new eppIDNA();
             $domain = new eppDomain($idna->encode($domainData["name"]));
             $result = $apiConnection->request(new metaregInfoDnsRequest($domain));
-            logActivity("HERE");
-            logActivity($result->getResultMessage());
             if ($result->getResultCode()==1000) {
                 //logActivity("MetaregistrarDNS exists");
                 /* @var $result metaregInfoDnsResponse */
