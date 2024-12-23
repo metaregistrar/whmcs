@@ -60,30 +60,19 @@ class Domain {
     }
     
     static function transfer($domainData, eppConnection $apiConnection) {
-        logActivity("begin of transfer request");
         try {
-            logActivity("set domain");
             $domain = new eppDomain($domainData["name"]);
-            logActivity("adding handles");
             $domain->setRegistrant(new eppContactHandle($domainData["registrantId"],    eppContactHandle::CONTACT_TYPE_REGISTRANT));
             $domain->addContact(new eppContactHandle($domainData["adminId"],            eppContactHandle::CONTACT_TYPE_ADMIN));
             $domain->addContact(new eppContactHandle($domainData["techId"],             eppContactHandle::CONTACT_TYPE_TECH));
             $domain->addContact(new eppContactHandle($domainData["billingId"],          eppContactHandle::CONTACT_TYPE_BILLING));
-            logActivity("adding nameservers");
             foreach($domainData["nameservers"] as $nameserver) {
                 $domain->addHost(new eppHost($nameserver));
             }
-            logActivity("setting period");
             $domain->setPeriod($domainData["period"]);
             $domain->setPeriodUnit(eppDomain::DOMAIN_PERIOD_UNIT_Y);
-            logActivity("setting authcode");
             $domain->setAuthorisationCode($domainData["eppCode"]);
-            
-
-            logActivity("starting the transfer");
             $apiConnection->request(new metaregEppTransferExtendedRequest(eppTransferRequest::OPERATION_REQUEST,$domain));
-        
-            
         } catch (eppException $e) {
             logActivity("TRANSFER ERROR: ".$e->getMessage());
             throw new \Exception($e->getMessage());
@@ -313,21 +302,26 @@ class Domain {
                         }
                     }
                     if ($dnsrecord['priority'] == 'N/A') {
-                        $dnsrecord['priority'] = 0;
+                        $dnsrecord['priority'] = null;
                     }
+                    //logActivity("MetaregistrarDNS found: ".implode(',',$dnsrecord), $_SESSION["uid"]);
                     if ($dnsrecord['address'] == '') {
-                        // This record must be removed
-                        $found = false;
-                        $foundcontent = '';
-                        foreach ($result->getContent() as $content) {
-                            if (($dnsrecord['hostname'] == $content['name']) && ($dnsrecord['type'] == $content['type']) && ($dnsrecord['priority'] == $content['priority'])) {
-                                $found = true;
-                                $foundcontent = $content['content'];
+                        if ($dnsrecord['type']!='NONE') {
+                            //logActivity("MetaregistrarDNS remove this: ".implode(',',$dnsrecord), $_SESSION["uid"]);
+                            // This record must be removed
+                            $found = false;
+                            $foundcontent = '';
+                            foreach ($result->getContent() as $content) {
+                                //logActivity("MetaregistrarDNS searching in: ".implode(',',$content), $_SESSION["uid"]);
+                                if (($dnsrecord['hostname'] == $content['name']) && ($dnsrecord['type'] == $content['type']) && ($dnsrecord['priority'] == $content['priority'])) {
+                                    $found = true;
+                                    //logActivity("MetaregistrarDNS rem: ".implode(',',$dnsrecord), $_SESSION["uid"]);
+                                    $foundcontent = $content['content'];
+                                }
                             }
-                        }
-                        if ($found) {
-                            //logActivity("MetaregistrarDNS rem: ".implode(',',$dnsrecord), $_SESSION["uid"]);
-                            $rem[] = array('name' => $dnsrecord['hostname'], 'type' => $dnsrecord['type'], 'content' => $foundcontent, 'ttl' => 3600, 'priority' => $dnsrecord['priority']);
+                            if ($found) {
+                                $rem[] = array('name' => $dnsrecord['hostname'], 'type' => $dnsrecord['type'], 'content' => $foundcontent, 'ttl' => 3600, 'priority' => $dnsrecord['priority']);
+                            }
                         }
                     } else {
                         // Check if there are records to be added
