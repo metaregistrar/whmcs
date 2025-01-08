@@ -8,13 +8,9 @@ use WHMCS\Domains\DomainLookup\SearchResult;
 
 class Addon {
 
-
-    static function verbose() {
-        return false;
-    }
-
     static function getConfig($params) {
         try {
+            /*
             $pdo = Capsule::connection()->getPdo();
             $query =  " CREATE TABLE IF NOT EXISTS MetaregistrarPollData("
                 . "     id int PRIMARY KEY NOT NULL AUTO_INCREMENT, "
@@ -26,7 +22,7 @@ class Addon {
                 . " ) DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;";
             $statement = $pdo->prepare($query);
             $statement->execute();
-
+            */
             return array(
                 "apiUsername" => array (
                     "FriendlyName" => "EPP Username",
@@ -62,16 +58,17 @@ class Addon {
     }
     
     static function registerDomain($params) {
-        $apiData        = Helpers::getApiData();
-        $apiConnection  = Api::getApiConnection($apiData);
         try {
-
+            $apiData        = Helpers::getApiData();
+            $apiConnection  = Api::getApiConnection($apiData);
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isAvailable($domainData, $apiConnection)) {
                 throw new \Exception("Domain is already registered.");
             }
-
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule register ".$domainData["name"]);
+            }
             $contactTypeArray = array(
                 Helpers::CONTACT_TYPE_REGISTRANT,
                 Helpers::CONTACT_TYPE_ADMIN,
@@ -118,9 +115,9 @@ class Addon {
     }
     
     static function sync($params) {
-        $apiData        = Helpers::getApiData();
-        $apiConnection  = Api::getApiConnection($apiData);
         try {
+            $apiData        = Helpers::getApiData();
+            $apiConnection  = Api::getApiConnection($apiData);
             $domainData     = Helpers::getDomainData($params);
             // Check if the domain name is still in our portfolio
             // If not, the domain is transferred out
@@ -130,7 +127,8 @@ class Addon {
                     'transferredAway' => true
                 );
             }
-            if (Addon::verbose()) {
+
+            if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule sync ".$domainData["name"]);
             }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
@@ -151,9 +149,9 @@ class Addon {
     }
     
     static function transferDomain($params) {
-        $apiData        = Helpers::getApiData();
-        $apiConnection  = Api::getApiConnection($apiData);
         try {
+            $apiData        = Helpers::getApiData();
+            $apiConnection  = Api::getApiConnection($apiData);
             $domainData     = Helpers::getDomainData($params);
 
             if(Domain::isAvailable($domainData, $apiConnection)) {
@@ -200,15 +198,15 @@ class Addon {
     }
     
     static function transferSync($params) {
-        $apiData        = Helpers::getApiData();
-        $apiConnection  = Api::getApiConnection($apiData);
         try {
+            $apiData        = Helpers::getApiData();
+            $apiConnection  = Api::getApiConnection($apiData);
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 return array();
             }
-            if (Addon::verbose()) {
+            if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule transfersync " . $domainData["name"]);
             }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
@@ -227,15 +225,15 @@ class Addon {
     }
     
     static function renewDomain($params) {
-        $apiData        = Helpers::getApiData();
-        $apiConnection  = Api::getApiConnection($apiData);
         try {
+            $apiData        = Helpers::getApiData();
+            $apiConnection  = Api::getApiConnection($apiData);
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
-            if (Addon::verbose()) {
+            if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule renew " . $domainData["name"]);
             }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
@@ -254,9 +252,9 @@ class Addon {
     }
     
     static function deleteDomain($params) {
-        $apiData        = Helpers::getApiData();
-        $apiConnection  = Api::getApiConnection($apiData);
         try {
+            $apiData        = Helpers::getApiData();
+            $apiConnection  = Api::getApiConnection($apiData);
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -275,15 +273,15 @@ class Addon {
     }
     
     static function getEppCode($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData        = Helpers::getApiData();
+            $apiConnection  = Api::getApiConnection($apiData);
             $domainData         = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
-            if (Addon::verbose()) {
+            if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule geteppcode " . $domainData["name"]);
             }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
@@ -299,20 +297,20 @@ class Addon {
     }
     
     static function getNameservers($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $domainData         = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 return null;
             }
-            if (Addon::verbose()) {
+            if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule getnameservers " . $domainData["name"]);
             }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
-            $returnArray = array('result'=>'success');
+            $returnArray = array();
             $index = 1;
             foreach($domainDataRemote["nameservers"] as $nameserver) {
                 $returnArray["ns".$index] = $nameserver;
@@ -329,10 +327,9 @@ class Addon {
     }
     
     static function saveNameservers($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
-
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $domainData         = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -351,9 +348,9 @@ class Addon {
     }
     
     static function registerNameserver($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $hostData           = Helpers::getHostData($params);
 
             Host::register($hostData, $apiConnection);
@@ -368,9 +365,9 @@ class Addon {
     }
     
     static function deleteNameserver($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $hostData           = Helpers::getHostData($params);
 
             Host::delete($hostData, $apiConnection);
@@ -385,9 +382,9 @@ class Addon {
     }
     
     static function updateNameserver($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $hostData           = Helpers::getHostData($params);
 
             Host::update($hostData, $apiConnection);
@@ -402,9 +399,9 @@ class Addon {
     }
     
     static function getContactDetails($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $apiConnection->setTimeout(30);
 
             $domainData         = Helpers::getDomainData($params);
@@ -412,7 +409,7 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
-            if (Addon::verbose()) {
+            if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule getcontactdetails " . $domainData["name"]);
             }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
@@ -445,18 +442,16 @@ class Addon {
     }
     
     static function saveContactDetails($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
-
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $apiConnection->setTimeout(30);
-
             $domainData         = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
-            if (Addon::verbose()) {
+            if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule savecontactdetails " . $domainData["name"]);
             }
             $domainDataRemote       = Domain::getInfo($domainData, $apiConnection);
@@ -484,10 +479,9 @@ class Addon {
     }
 
     static function getDomainLock($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
-
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $domainData         = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -508,9 +502,9 @@ class Addon {
     }
 
     static function saveDomainLock($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $domainData         = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -527,9 +521,9 @@ class Addon {
     }
 
     static function getDomainDNS($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $domainData         = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -545,9 +539,9 @@ class Addon {
     }
 
     static function storeDomainDns($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $domainData         = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
@@ -563,9 +557,9 @@ class Addon {
     }
 
     static function checkAvailability($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $results = new ResultsList();
 
             foreach ($params["tlds"] as $tld) {
@@ -598,12 +592,13 @@ class Addon {
     }
 
     static function ResetDNS($params) {
-        $apiData            = Helpers::getApiData();
-        $apiConnection      = Api::getApiConnection($apiData);
         try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
             $domainData         = Helpers::getDomainData($params);
+
             $domainname = $domainData['name'];
-            if (Addon::verbose()) {
+            if ($apiData["debugMode"]==1) {
                 logActivity("RESET DNS FOR $domainname", $_SESSION["uid"]);
             }
             if(!Domain::isRegistered($domainData, $apiConnection)) {

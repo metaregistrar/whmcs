@@ -24,8 +24,6 @@ use Metaregistrar\EPP\metaregDeleteDnsRequest;
 use \Metaregistrar\EPP\metaregInfoDnsRequest;
 use \Metaregistrar\EPP\metaregInfoDnsResponse;
 use \Metaregistrar\EPP\metaregUpdateDnsRequest;
-use \Metaregistrar\EPP\metaregUpdateDnsResponse;
-use mysql_xdevapi\Exception;
 
 class Domain {
     static function register($domainData, eppConnection $apiConnection) {
@@ -304,6 +302,9 @@ class Domain {
     static function resetDNS($domainData, eppConnection $eppConnection) {
         $domainname = $domainData["name"];
         $dnsrecords = [
+            ['hostname'=>$domainname,'type'=>'NS','address'=>'ns1.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
+            ['hostname'=>$domainname,'type'=>'NS','address'=>'ns2.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
+            ['hostname'=>$domainname,'type'=>'NS','address'=>'ns3.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
             ['hostname'=>$domainname,'type'=>'A','address'=>'213.249.71.100','priority'=>'0'],
             ['hostname'=>'www.'.$domainname,'type'=>'A','address'=>'213.249.71.100','priority'=>'0'],
             ['hostname'=>'mail.'.$domainname,'type'=>'A','address'=>'213.249.71.100','priority'=>'0'],
