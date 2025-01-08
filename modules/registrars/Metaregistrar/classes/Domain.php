@@ -20,10 +20,12 @@ use \Metaregistrar\EPP\eppUpdateDomainRequest;
 use \Metaregistrar\EPP\metaregEppAutorenewRequest;
 use \Metaregistrar\EPP\eppCheckDomainRequest;
 use \Metaregistrar\EPP\eppCheckDomainResponse;
+use Metaregistrar\EPP\metaregDeleteDnsRequest;
 use \Metaregistrar\EPP\metaregInfoDnsRequest;
 use \Metaregistrar\EPP\metaregInfoDnsResponse;
 use \Metaregistrar\EPP\metaregUpdateDnsRequest;
 use \Metaregistrar\EPP\metaregUpdateDnsResponse;
+use mysql_xdevapi\Exception;
 
 class Domain {
     static function register($domainData, eppConnection $apiConnection) {
@@ -281,6 +283,39 @@ class Domain {
         }
     }
 
+    static function deleteDNS($domainData, eppConnection $apiConnection) {
+        try {
+            $idna = new eppIDNA();
+            $domain = new eppDomain($idna->encode($domainData["name"]));
+            $result = $apiConnection->request(new metaregDeleteDnsRequest($domain));
+            //if ($result->getResultCode() == 1000) {
+
+            //}
+        } catch (eppException $e) {
+            if ($e->getCode() == 2303) {
+                //This was expected, domain DNS MIGHT BE empty
+            } else {
+                throw new \Exception($e->getMessage());
+            }
+
+        }
+    }
+
+    static function resetDNS($domainData, eppConnection $eppConnection) {
+        $domainname = $domainData["name"];
+        $dnsrecords = [
+            ['hostname'=>$domainname,'type'=>'A','address'=>'213.249.71.100','priority'=>'0'],
+            ['hostname'=>'www.'.$domainname,'type'=>'A','address'=>'213.249.71.100','priority'=>'0'],
+            ['hostname'=>'mail.'.$domainname,'type'=>'A','address'=>'213.249.71.100','priority'=>'0'],
+            ['hostname'=>$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::100','priority'=>'0'],
+            ['hostname'=>'www.'.$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::100','priority'=>'0'],
+            ['hostname'=>'mail.'.$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::100','priority'=>'0'],
+            ['hostname'=>$domainname,'type'=>'MX','address'=>'mail.'.$domainname,'priority'=>'10'],
+            ['hostname'=>$domainname,'type'=>'TXT','address'=>'v=spf1 ipv4=213.249.71.100 ~all','priority'=>'0']
+        ];
+        Domain::saveDNS($domainData, $eppConnection, $dnsrecords);
+    }
+
     static function saveDNS($domainData, eppConnection $apiConnection, $dns) {
         try {
             $idna = new eppIDNA();
@@ -389,7 +424,7 @@ class Domain {
                 $apiConnection->request(new metaregCreateDnsRequest($domain,$add));
                 return null;
             } else {
-                //logActivity("ERROR INFODNS: ".$e->getMessage());
+                logActivity("ERROR INFODNS: ".$e->getMessage());
                 throw new \Exception($e->getMessage());
             }
         }

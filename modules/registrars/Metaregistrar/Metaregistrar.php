@@ -9,215 +9,103 @@ use WHMCS\Domains\DomainLookup\SearchResult;
 require_once 'Autoloader.php';
 require_once 'classes/metaregistrar-epp-client/autoloader.php';
 
-function Metaregistrar_MetaData()
-{
+function Metaregistrar_MetaData() {
     return array(
         'DisplayName' => 'Metaregistrar BV',
-        'APIVersion' => '1.1',
+        'APIVersion' => '1.2',
     );
 }
 
-
-
-/*
-function Metaregistrar_ClientAreaCustomButtonArray()
-{
+function Metaregistrar_ClientAreaCustomButtonArray() {
     return array(
-        'Menu function' => 'MenuFunction',
+        'DNS reset' => 'DNSReset',
     );
 }
 
-function Metaregistrar_MenuFunctio ()
-{
-    return array(
-        'Menu function' => 'menufunction',
-    );
+function Metaregistrar_DNSReset ($params) {
+    return \MetaregistrarModule\classes\Addon::ResetDNS($params);
 }
-*/
 
 function Metaregistrar_getConfigArray($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::getConfig($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::getConfig($params);
 }
 
 function Metaregistrar_RegisterDomain($params) {
-    try {
-        \MetaregistrarModule\classes\Addon::registerDomain($params);
-        return array('status'=>'success');
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::registerDomain($params);
 }
 
 function Metaregistrar_TransferDomain($params) {
-    try {
-        \MetaregistrarModule\classes\Addon::transferDomain($params);
-        return array('status'=>'success');
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::transferDomain($params);
 }
 
 function Metaregistrar_Sync($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::sync($params);
-     } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::sync($params);
 }
 
 function Metaregistrar_TransferSync($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::transferSync($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::transferSync($params);
 }
 
 function Metaregistrar_RenewDomain($params) {
-    try {
-        \MetaregistrarModule\classes\Addon::renewDomain($params);
-        return array('status'=>'success');
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::renewDomain($params);
 }
 
 function Metaregistrar_RequestDelete($params) {
-    try {
-        \MetaregistrarModule\classes\Addon::deleteDomain($params);
-        return array('status'=>'success');
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::deleteDomain($params);
 }
 
 function Metaregistrar_GetEPPCode($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::getEppCode($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::getEppCode($params);
 }
 
 function Metaregistrar_GetNameservers($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::getNameservers($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::getNameservers($params);
 }
 
 function Metaregistrar_SaveNameservers($params) {
-    try {
-        \MetaregistrarModule\classes\Addon::saveNameservers($params);
-        return array('status'=>'success');
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::saveNameservers($params);
 }
 
 function Metaregistrar_RegisterNameserver($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::registerNameserver($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::registerNameserver($params);
 }
 
 function Metaregistrar_DeleteNameserver($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::deleteNameserver($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::deleteNameserver($params);
 }
 
 function Metaregistrar_ModifyNameserver($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::updateNameserver($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::updateNameserver($params);
 }
 
 function Metaregistrar_GetContactDetails($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::getContactDetails($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::getContactDetails($params);
 }
 
 function Metaregistrar_SaveContactDetails($params) {
-    try {
-        \MetaregistrarModule\classes\Addon::saveContactDetails($params);
-        return array('status'=>'success');
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::saveContactDetails($params);
 }
 
 function Metaregistrar_CheckAvailability($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::checkAvailability($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::checkAvailability($params);
 }
-
-/*
- * function Metaregistrar_ClientArea($params)
-{
-    $output = '
-        <div class="alert alert-info">
-            Your custom HTML output goes here...
-        </div>
-    ';
-    return $output;
-}
- */
 
 function Metaregistrar_ClientArea($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::clientArea($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::clientArea($params);
 }
 
 function Metaregistrar_GetRegistrarLock($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::getDomainLock($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return \MetaregistrarModule\classes\Addon::getDomainLock($params);
 }
 
 function Metaregistrar_SaveRegistrarLock($params) {
-    try {
-        MetaregistrarModule\classes\Addon::saveDomainLock($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return MetaregistrarModule\classes\Addon::saveDomainLock($params);
 }
 
 function Metaregistrar_GetDNS($params) {
-    try {
-        return \MetaregistrarModule\classes\Addon::getDomainDNS($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
-
+    return \MetaregistrarModule\classes\Addon::getDomainDNS($params);
 }
 
 function Metaregistrar_SaveDNS($params) {
-    try {
-        \MetaregistrarModule\classes\Addon::storeDomainDns($params);
-    } catch (Exception $e) {
-        return array('error' => $e->getMessage());
-    }
+    return  \MetaregistrarModule\classes\Addon::storeDomainDns($params);
 }

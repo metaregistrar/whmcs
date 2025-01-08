@@ -2,55 +2,63 @@
 
 namespace MetaregistrarModule\classes;
 use Illuminate\Database\Capsule\Manager as Capsule;
+use mysql_xdevapi\Exception;
 use WHMCS\Domains\DomainLookup\ResultsList;
 use WHMCS\Domains\DomainLookup\SearchResult;
 
 class Addon {
 
 
+    static function verbose() {
+        return false;
+    }
+
     static function getConfig($params) {
+        try {
+            $pdo = Capsule::connection()->getPdo();
+            $query =  " CREATE TABLE IF NOT EXISTS MetaregistrarPollData("
+                . "     id int PRIMARY KEY NOT NULL AUTO_INCREMENT, "
+                . "     domainId int NOT NULL, "
+                . "     messageId int NOT NULL, "
+                . "     domain VARCHAR(255) NOT NULL, "
+                . "     description VARCHAR(255) NOT NULL, "
+                . "     date DATE NOT NULL "
+                . " ) DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;";
+            $statement = $pdo->prepare($query);
+            $statement->execute();
 
-        $pdo = Capsule::connection()->getPdo();
-        $query =  " CREATE TABLE IF NOT EXISTS MetaregistrarPollData("
-            . "     id int PRIMARY KEY NOT NULL AUTO_INCREMENT, "
-            . "     domainId int NOT NULL, "
-            . "     messageId int NOT NULL, "
-            . "     domain VARCHAR(255) NOT NULL, "
-            . "     description VARCHAR(255) NOT NULL, "
-            . "     date DATE NOT NULL "
-            . " ) DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;";
-        $statement = $pdo->prepare($query);
-        $statement->execute();
+            return array(
+                "apiUsername" => array (
+                    "FriendlyName" => "EPP Username",
+                    "Type" => "text",
+                    "Size" => "25",
+                    "Description" => "Enter the EPP API username of your Metaregistrar account",
+                    "Default" => "",
+                ),
+                "apiPassword" => array (
+                    "FriendlyName" => "EPP Password",
+                    "Type" => "password",
+                    "Size" => "25",
+                    "Description" => "Enter the EPP API password of your Metaregistrar account",
+                    "Default" => "",
+                ),
+                "autoRenewMode" => array (
+                    "FriendlyName" => "Auto renew domains",
+                    "Type" => "yesno",
+                    "Description" => "When selected, all created domain names will auto-renew automatically",
+                    "Default" => 1,
+                ),
+                "debugMode" => array (
+                    "FriendlyName" => "Debug Mode",
+                    "Type" => "yesno",
+                    "Description" => "Tick to save API requests and responses in WHMCS module log",
+                    "Default" => 0,
+                ),
+            );
+        } catch (Exception $e) {
+            return array('result'=>'error', 'message' => $e->getMessage());
+        }
 
-
-        return array(
-            "apiUsername" => array (
-                "FriendlyName" => "EPP Username",
-                "Type" => "text",
-                "Size" => "25", 
-                "Description" => "Enter the EPP API username of your Metaregistrar account",
-                "Default" => "",
-            ),
-            "apiPassword" => array (
-                "FriendlyName" => "EPP Password",
-                "Type" => "password",
-                "Size" => "25",
-                "Description" => "Enter the EPP API password of your Metaregistrar account",
-                "Default" => "",
-            ),
-            "autoRenewMode" => array (
-                "FriendlyName" => "Auto renew domains",
-                "Type" => "yesno",
-                "Description" => "When selected, all created domain names will auto-renew automatically",
-                "Default" => 1,
-            ),
-            "debugMode" => array (
-                "FriendlyName" => "Debug Mode",
-                "Type" => "yesno",
-                "Description" => "Tick to save API requests and responses in WHMCS module log",
-                "Default" => 0,
-            ),
-        );
     }
     
     static function registerDomain($params) {
@@ -85,11 +93,14 @@ class Addon {
                 $domainData["autorenew"]    = false;
                 Domain::setAutorenew($domainData, $apiConnection);
             }
+            // Setup default DNS for this domain
+            Domain::resetDNS($domainData, $apiConnection);
+            // Setup default DNS for this domain
 
             Api::closeApiConnection($apiConnection);
-            
+            return array('result'=>'success');
         } catch(\Exception $e) {  
-            try {                                                               //if error occured we have to remove created contacts
+            try {                 //if error occured we have to remove created contacts
                 foreach($contactTypeArray as $contactType) {
                     if(isset($domainData[$contactType."Id"])) {
                         $contactData = array(
@@ -101,9 +112,8 @@ class Addon {
             } catch(\Exception $e2) {
                 logActivity("MetaregistrarModule: ".$e2->getMessage(),$_SESSION["uid"]);
             }
-            
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }
     }
     
@@ -112,13 +122,17 @@ class Addon {
         $apiConnection  = Api::getApiConnection($apiData);
         try {
             $domainData     = Helpers::getDomainData($params);
-
+            // Check if the domain name is still in our portfolio
+            // If not, the domain is transferred out
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 return array(
                     'active' => false,
+                    'transferredAway' => true
                 );
             }
-
+            if (Addon::verbose()) {
+                logActivity("MetaregistrarModule sync ".$domainData["name"]);
+            }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
@@ -132,7 +146,7 @@ class Addon {
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
     
@@ -162,9 +176,9 @@ class Addon {
                 }
             }
             Domain::transfer($domainData, $apiConnection);
-            
             Api::closeApiConnection($apiConnection);
-            
+            return array('result'=>'success');
+
         } catch(\Exception $e) {  
             try {                                                               //if error occured we have to remove created contacts
                 foreach($contactTypeArray as $contactType) {
@@ -181,7 +195,7 @@ class Addon {
             }
             
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }
     }
     
@@ -194,7 +208,9 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 return array();
             }
-
+            if (Addon::verbose()) {
+                logActivity("MetaregistrarModule transfersync " . $domainData["name"]);
+            }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
@@ -206,7 +222,7 @@ class Addon {
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }
     }
     
@@ -219,7 +235,9 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
-
+            if (Addon::verbose()) {
+                logActivity("MetaregistrarModule renew " . $domainData["name"]);
+            }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
             $domainData["expirydate"] = $domainDataRemote["expirydate"];
@@ -227,10 +245,11 @@ class Addon {
             Domain::renew($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-            
+            return array('result'=>'success');
+
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
     
@@ -247,10 +266,11 @@ class Addon {
             Domain::delete($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-            
+            return array('result'=>'success');
+
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
     
@@ -263,18 +283,18 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
-
+            if (Addon::verbose()) {
+                logActivity("MetaregistrarModule geteppcode " . $domainData["name"]);
+            }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
 
-            return array(
-                'eppcode' => $domainDataRemote["eppCode"],
-            );
+            return array('eppcode' => $domainDataRemote["eppCode"],);
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
     
@@ -287,11 +307,12 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 return null;
             }
-
+            if (Addon::verbose()) {
+                logActivity("MetaregistrarModule getnameservers " . $domainData["name"]);
+            }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
-            //$returnArray = array("success"=>true);
-            $returnArray = array();
+            $returnArray = array('result'=>'success');
             $index = 1;
             foreach($domainDataRemote["nameservers"] as $nameserver) {
                 $returnArray["ns".$index] = $nameserver;
@@ -303,7 +324,7 @@ class Addon {
         
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
     
@@ -321,12 +342,11 @@ class Addon {
             Domain::updateNameservers($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-            $returnArray = array("success"=>true);
-            return $returnArray;
-            
+            return array('result'=>'success');
+
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
     
@@ -339,13 +359,11 @@ class Addon {
             Host::register($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-
-            $returnArray = array("success"=>true);
-            return $returnArray;
+            return array('result'=>'success');
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
     
@@ -358,13 +376,11 @@ class Addon {
             Host::delete($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-
-            $returnArray = array("success"=>true);
-            return $returnArray;
+            return array('result'=>'success');
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
     
@@ -377,13 +393,11 @@ class Addon {
             Host::update($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-
-            $returnArray = array("success"=>true);
-            return $returnArray;
+            return array('result'=>'success');
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
     
@@ -398,7 +412,9 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
-
+            if (Addon::verbose()) {
+                logActivity("MetaregistrarModule getcontactdetails " . $domainData["name"]);
+            }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
             $registrantData["id"] = $domainDataRemote["registrantId"];
@@ -424,7 +440,7 @@ class Addon {
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
     
@@ -440,7 +456,9 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
-
+            if (Addon::verbose()) {
+                logActivity("MetaregistrarModule savecontactdetails " . $domainData["name"]);
+            }
             $domainDataRemote       = Domain::getInfo($domainData, $apiConnection);
             
             $contactTypeArray = array(
@@ -457,10 +475,11 @@ class Addon {
             }
             
             Api::closeApiConnection($apiConnection);
-            
+            return array('result'=>'success');
+
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
 
@@ -483,7 +502,7 @@ class Addon {
             }
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }
 
     }
@@ -499,9 +518,11 @@ class Addon {
             }
             Domain::setDomainLock($domainData, $apiConnection, ($params['lockenabled']=='locked' ? true : false));
             Api::closeApiConnection($apiConnection);
+            return array('result'=>'success');
+
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }
     }
 
@@ -519,7 +540,7 @@ class Addon {
             return $dns;
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }
     }
 
@@ -534,9 +555,10 @@ class Addon {
             }
             Domain::saveDNS($domainData, $apiConnection, $params['dnsrecords']);
             Api::closeApiConnection($apiConnection);
+            return array('result'=>'success');
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw $e;
+            return array('result'=>'error', 'message' => $e->getMessage());
         }
     }
 
@@ -567,15 +589,38 @@ class Addon {
             }
             
             Api::closeApiConnection($apiConnection);
-
             return $results;
         
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            throw new \Exception($e->getMessage());
+            return array('result'=>'error', 'message' => $e->getMessage());
         }    
     }
-    
+
+    static function ResetDNS($params) {
+        $apiData            = Helpers::getApiData();
+        $apiConnection      = Api::getApiConnection($apiData);
+        try {
+            $domainData         = Helpers::getDomainData($params);
+            $domainname = $domainData['name'];
+            if (Addon::verbose()) {
+                logActivity("RESET DNS FOR $domainname", $_SESSION["uid"]);
+            }
+            if(!Domain::isRegistered($domainData, $apiConnection)) {
+                logActivity("IS NOT REGISTERED: $domainname",$_SESSION["uid"]);
+                throw new \Exception("Domain is not registered.");
+            }
+            Domain::deleteDNS($domainData, $apiConnection);
+            Domain::resetDNS($domainData, $apiConnection);
+            return array('result'=>'success');
+        } catch (\Exception $e) {
+            logActivity("ERROR RESETTING DNS: ".$e->getMessage(),$_SESSION["uid"]);
+            Api::closeApiConnection($apiConnection);
+            return array('result'=>'error', 'message' => $e->getMessage());
+        }
+    }
+
+
     static function clientArea($params) {
         
         $table = Helpers::createPollDataTable($params["domainid"]);
