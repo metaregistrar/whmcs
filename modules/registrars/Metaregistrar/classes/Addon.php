@@ -66,9 +66,9 @@ class Addon {
             if(!Domain::isAvailable($domainData, $apiConnection)) {
                 throw new \Exception("Domain is already registered.");
             }
-            //if ($apiData["debugMode"]==1) {
+            if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule register ".$domainData["name"]);
-            //}
+            }
             $contactTypeArray = array(
                 Helpers::CONTACT_TYPE_REGISTRANT,
                 Helpers::CONTACT_TYPE_ADMIN,
@@ -84,9 +84,7 @@ class Addon {
                     Contact::addProperties($contactData, $apiConnection);
                 }
             }
-            logActivity("MetaregistrarModule registering ".$domainData["name"]);
             Domain::register($domainData, $apiConnection);
-            logActivity("MetaregistrarModule registered ".$domainData["name"]);
             if (!$apiData["autoRenewMode"]) {
                 $domainData["autorenew"]    = false;
                 Domain::setAutorenew($domainData, $apiConnection);
