@@ -52,7 +52,7 @@ class Addon {
                 ),
             );
         } catch (Exception $e) {
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }
 
     }
@@ -66,9 +66,9 @@ class Addon {
             if(!Domain::isAvailable($domainData, $apiConnection)) {
                 throw new \Exception("Domain is already registered.");
             }
-            if ($apiData["debugMode"]==1) {
+            //if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule register ".$domainData["name"]);
-            }
+            //}
             $contactTypeArray = array(
                 Helpers::CONTACT_TYPE_REGISTRANT,
                 Helpers::CONTACT_TYPE_ADMIN,
@@ -84,8 +84,9 @@ class Addon {
                     Contact::addProperties($contactData, $apiConnection);
                 }
             }
+            logActivity("MetaregistrarModule registering ".$domainData["name"]);
             Domain::register($domainData, $apiConnection);
-
+            logActivity("MetaregistrarModule registered ".$domainData["name"]);
             if (!$apiData["autoRenewMode"]) {
                 $domainData["autorenew"]    = false;
                 Domain::setAutorenew($domainData, $apiConnection);
@@ -96,7 +97,7 @@ class Addon {
 
             Api::closeApiConnection($apiConnection);
             return array('result'=>'success');
-        } catch(\Exception $e) {  
+        } catch(\Exception $e) {
             try {                 //if error occured we have to remove created contacts
                 foreach($contactTypeArray as $contactType) {
                     if(isset($domainData[$contactType."Id"])) {
@@ -107,10 +108,13 @@ class Addon {
                     }
                 }
             } catch(\Exception $e2) {
-                logActivity("MetaregistrarModule: ".$e2->getMessage(),$_SESSION["uid"]);
+                logActivity("MetaregistrarModule ERROR: ".$e2->getMessage(),$_SESSION["uid"]);
+                Api::closeApiConnection($apiConnection);
+                return array('error' => $e2->getMessage());
             }
+            logActivity("MetaregistrarModule ERROR: ".$e->getMessage(),$_SESSION["uid"]);
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }
     }
     
@@ -144,7 +148,7 @@ class Addon {
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
     
@@ -193,7 +197,7 @@ class Addon {
             }
             
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }
     }
     
@@ -220,7 +224,7 @@ class Addon {
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }
     }
     
@@ -247,7 +251,7 @@ class Addon {
 
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
     
@@ -268,7 +272,7 @@ class Addon {
 
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
     
@@ -292,7 +296,7 @@ class Addon {
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
     
@@ -322,7 +326,7 @@ class Addon {
         
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
     
@@ -343,7 +347,7 @@ class Addon {
 
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
     
@@ -360,7 +364,7 @@ class Addon {
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
     
@@ -377,7 +381,7 @@ class Addon {
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
     
@@ -394,7 +398,7 @@ class Addon {
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
     
@@ -437,7 +441,7 @@ class Addon {
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
     
@@ -474,7 +478,7 @@ class Addon {
 
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
 
@@ -496,7 +500,7 @@ class Addon {
             }
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }
 
     }
@@ -516,7 +520,7 @@ class Addon {
 
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }
     }
 
@@ -534,7 +538,7 @@ class Addon {
             return $dns;
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }
     }
 
@@ -552,7 +556,7 @@ class Addon {
             return array('result'=>'success');
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }
     }
 
@@ -587,7 +591,7 @@ class Addon {
         
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }    
     }
 
@@ -611,7 +615,7 @@ class Addon {
         } catch (\Exception $e) {
             logActivity("ERROR RESETTING DNS: ".$e->getMessage(),$_SESSION["uid"]);
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'error', 'message' => $e->getMessage());
+            return array('error' => $e->getMessage());
         }
     }
 
