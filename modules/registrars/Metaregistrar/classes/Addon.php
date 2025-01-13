@@ -180,7 +180,7 @@ class Addon {
             return array('result'=>'success');
 
         } catch(\Exception $e) {  
-            try {                                                               //if error occured we have to remove created contacts
+            try {   //if error occured we have to remove created contacts
                 foreach($contactTypeArray as $contactType) {
                     if(isset($domainData[$contactType."Id"])) {
                         $contactData = array(
@@ -206,6 +206,9 @@ class Addon {
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
+                // In case autorenew is switched off, sync the autorenew data
+                logActivity("MetaregistrarModule transfersync setting autorenew on for " . $domainData["name"]. " autorenew setting is ".$domainData["autorenew"]);
+                Domain::setAutorenew($domainData, $apiConnection);
                 return array();
             }
             if ($apiData["debugMode"]==1) {

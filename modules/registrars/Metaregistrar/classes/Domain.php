@@ -305,14 +305,14 @@ class Domain {
             ['hostname'=>$domainname,'type'=>'NS','address'=>'ns1.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
             ['hostname'=>$domainname,'type'=>'NS','address'=>'ns2.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
             ['hostname'=>$domainname,'type'=>'NS','address'=>'ns3.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
-            ['hostname'=>$domainname,'type'=>'A','address'=>'213.249.71.100','priority'=>'0'],
-            ['hostname'=>'www.'.$domainname,'type'=>'A','address'=>'213.249.71.100','priority'=>'0'],
-            ['hostname'=>'mail.'.$domainname,'type'=>'A','address'=>'213.249.71.100','priority'=>'0'],
-            ['hostname'=>$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::100','priority'=>'0'],
-            ['hostname'=>'www.'.$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::100','priority'=>'0'],
-            ['hostname'=>'mail.'.$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::100','priority'=>'0'],
+            ['hostname'=>$domainname,'type'=>'A','address'=>'213.249.71.101','priority'=>'0'],
+            ['hostname'=>'*.'.$domainname,'type'=>'A','address'=>'213.249.71.101','priority'=>'0'],
+            ['hostname'=>'mail.'.$domainname,'type'=>'A','address'=>'213.249.71.101','priority'=>'0'],
+            ['hostname'=>$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::101','priority'=>'0'],
+            ['hostname'=>'*.'.$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::101','priority'=>'0'],
+            ['hostname'=>'mail.'.$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::101','priority'=>'0'],
             ['hostname'=>$domainname,'type'=>'MX','address'=>'mail.'.$domainname,'priority'=>'10'],
-            ['hostname'=>$domainname,'type'=>'TXT','address'=>'v=spf1 ipv4=213.249.71.100 ~all','priority'=>'0']
+            ['hostname'=>$domainname,'type'=>'TXT','address'=>'v=spf1 ipv4=213.249.71.101 ~all','priority'=>'0']
         ];
         Domain::saveDNS($domainData, $eppConnection, $dnsrecords);
     }
