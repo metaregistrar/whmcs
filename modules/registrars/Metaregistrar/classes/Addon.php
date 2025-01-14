@@ -206,10 +206,11 @@ class Addon {
             $domainData     = Helpers::getDomainData($params);
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
+                return array();
+            } else {
                 // In case autorenew is switched off, sync the autorenew data
                 logActivity("MetaregistrarModule transfersync setting autorenew on for " . $domainData["name"]. " autorenew setting is ".$domainData["autorenew"]);
                 Domain::setAutorenew($domainData, $apiConnection);
-                return array();
             }
             if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule transfersync " . $domainData["name"]);
@@ -566,7 +567,7 @@ class Addon {
             $apiData            = Helpers::getApiData();
             $apiConnection      = Api::getApiConnection($apiData);
             $results = new ResultsList();
-
+            LogActivity("Domain CHECK!",0);
             foreach ($params["tlds"] as $tld) {
                 $domainData["search"][] = array(
                     "searchTerm" => $params["searchTerm"],
