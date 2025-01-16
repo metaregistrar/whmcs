@@ -53,7 +53,6 @@ class Domain {
             $idna = new eppIDNA();
             $domain = new eppDomain($idna->encode($domainData["name"]));
             $apiConnection->request(new eppDeleteDomainRequest($domain));
-        
         } catch (eppException $e) {
             throw new \Exception($e->getMessage());
         }
@@ -72,7 +71,11 @@ class Domain {
             $domain->setPeriod($domainData["period"]);
             $domain->setPeriodUnit(eppDomain::DOMAIN_PERIOD_UNIT_Y);
             $domain->setAuthorisationCode($domainData["eppCode"]);
-            $apiConnection->request(new metaregEppTransferExtendedRequest(eppTransferRequest::OPERATION_REQUEST,$domain));
+            $response = $apiConnection->request(new metaregEppTransferExtendedRequest(eppTransferRequest::OPERATION_REQUEST,$domain));
+            if ($response->getResultCode()!=1001) {
+                logActivity("TRANSFER ERROR: ".$response->getResultMessage());
+                throw new \Exception($response->getResultMessage());
+            }
         } catch (eppException $e) {
             logActivity("TRANSFER ERROR: ".$e->getMessage());
             throw new \Exception($e->getMessage());
