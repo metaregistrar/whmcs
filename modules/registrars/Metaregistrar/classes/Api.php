@@ -9,7 +9,11 @@ class Api {
     static function getApiConnection($apiData){
         try  {
             $connection = new eppConnection();
-            $connection->setHostname('ssl://eppl.metaregistrar.com');
+            if ($apiData["LiveServer"]==1) {
+                $connection->setHostname('ssl://eppl.metaregistrar.com');
+            } else {
+                $connection->setHostname('ssl://eppl-ote.metaregistrar.com');
+            }
             $connection->setPort(7000);
             $connection->setUsername($apiData["username"]);
             $connection->setPassword($apiData["password"]);
@@ -17,9 +21,6 @@ class Api {
             $connection->useExtension('secDNS-1.1');
             $connection->useExtension('command-ext-1.0');
 
-            //if($apiData["debugMode"]) {
-            //    $connection->enableLogging();
-            //}
             if($connection->login()) {
                 return $connection;
             } else {

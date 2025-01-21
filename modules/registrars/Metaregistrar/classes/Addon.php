@@ -38,6 +38,12 @@ class Addon {
                     "Description" => "Enter the EPP API password of your Metaregistrar account",
                     "Default" => "",
                 ),
+                "LiveServer" => array (
+                    "FriendlyName" => "Live Server",
+                    "Type" => "yesno",
+                    "Description" => "When ticked, the live service of Metaregistrar is used, when not, the OTE service",
+                    "Default" => 0,
+                ),
                 "autoRenewMode" => array (
                     "FriendlyName" => "Auto renew domains",
                     "Type" => "yesno",
