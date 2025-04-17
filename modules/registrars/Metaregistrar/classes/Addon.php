@@ -5,6 +5,8 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 use mysql_xdevapi\Exception;
 use WHMCS\Domains\DomainLookup\ResultsList;
 use WHMCS\Domains\DomainLookup\SearchResult;
+use WHMCS\Carbon;
+use WHMCS\Domain\Registrar\Domain as WHMCSDomain;
 
 class Addon {
 
@@ -165,7 +167,9 @@ class Addon {
             if(Domain::isAvailable($domainData, $apiConnection)) {
                 throw new \Exception("Domain is free for registration and cannot be transferred.");
             }
-
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule transferDomain ".$domainData["name"]);
+            }
             $contactTypeArray = array(
                 Helpers::CONTACT_TYPE_REGISTRANT,
                 Helpers::CONTACT_TYPE_ADMIN,
@@ -210,7 +214,9 @@ class Addon {
             $apiData        = Helpers::getApiData();
             $apiConnection  = Api::getApiConnection($apiData);
             $domainData     = Helpers::getDomainData($params);
-
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule sync ".$domainData["name"]);
+            }
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 return array();
             } else {
@@ -218,9 +224,7 @@ class Addon {
                 logActivity("MetaregistrarModule transfersync setting autorenew on for " . $domainData["name"]. " autorenew setting is ".$domainData["autorenew"]);
                 Domain::setAutorenew($domainData, $apiConnection);
             }
-            if ($apiData["debugMode"]==1) {
-                logActivity("MetaregistrarModule transfersync " . $domainData["name"]);
-            }
+
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
@@ -272,7 +276,9 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 return;
             }
-
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule delete ".$domainData["name"]);
+            }
             Domain::delete($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
@@ -347,7 +353,9 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
-
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule saveNamerservers ".$domainData["name"]);
+            }
             Domain::updateNameservers($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
@@ -364,6 +372,10 @@ class Addon {
             $apiData            = Helpers::getApiData();
             $apiConnection      = Api::getApiConnection($apiData);
             $hostData           = Helpers::getHostData($params);
+
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule registerNameserver");
+            }
 
             Host::register($hostData, $apiConnection);
 
@@ -382,6 +394,9 @@ class Addon {
             $apiConnection      = Api::getApiConnection($apiData);
             $hostData           = Helpers::getHostData($params);
 
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule deleteNameserver ");
+            }
             Host::delete($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
@@ -398,7 +413,9 @@ class Addon {
             $apiData            = Helpers::getApiData();
             $apiConnection      = Api::getApiConnection($apiData);
             $hostData           = Helpers::getHostData($params);
-
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule updateNameserver ");
+            }
             Host::update($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
@@ -422,7 +439,7 @@ class Addon {
                 throw new \Exception("Domain is not registered.");
             }
             if ($apiData["debugMode"]==1) {
-                logActivity("MetaregistrarModule getcontactdetails " . $domainData["name"]);
+                logActivity("MetaregistrarModule getContactDetails " . $domainData["name"]);
             }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
@@ -464,7 +481,7 @@ class Addon {
                 throw new \Exception("Domain is not registered.");
             }
             if ($apiData["debugMode"]==1) {
-                logActivity("MetaregistrarModule savecontactdetails " . $domainData["name"]);
+                logActivity("MetaregistrarModule saveContactDetails " . $domainData["name"]);
             }
             $domainDataRemote       = Domain::getInfo($domainData, $apiConnection);
             
@@ -490,6 +507,38 @@ class Addon {
         }    
     }
 
+    static function getDomainInformation($params) {
+        try {
+            $apiData            = Helpers::getApiData();
+            $apiConnection      = Api::getApiConnection($apiData);
+            $domainData         = Helpers::getDomainData($params);
+
+            if(!Domain::isRegistered($domainData, $apiConnection)) {
+                throw new \Exception("Domain is not registered.");
+            }
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule getDomainInformation ".$domainData["name"]);
+            }
+            if ($response = Domain::getInfo($domainData,$apiConnection)) {
+                return (new WHMCSDomain)
+                    ->setDomain($response['name'])
+                    ->setNameservers($response['nameservers'])
+                    ->setRegistrationStatus($response['status'])
+                    ->setTransferLock($response['transferLock'])
+                    ->setTransferLockExpiryDate(null)
+                    ->setExpiryDate(Carbon::createFromFormat('Y-m-d', $response['expirydate']))
+                    ->setRestorable(false)
+                    ->setIdProtectionStatus(false)
+                    ->setDnsManagementStatus(true)
+                    ->setEmailForwardingStatus(false)
+                    ->setIsIrtpEnabled(in_array($response['tld'], ['.com']));
+            }
+        } catch (\Exception $e) {
+            Api::closeApiConnection($apiConnection);
+            return array('error' => $e->getMessage());
+        }
+    }
+
     static function getDomainLock($params) {
         try {
             $apiData            = Helpers::getApiData();
@@ -498,6 +547,9 @@ class Addon {
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
+            }
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule getDomainLock ".$domainData["name"]);
             }
             if (Domain::isLocked($domainData,$apiConnection)) {
                 Api::closeApiConnection($apiConnection);
@@ -522,6 +574,9 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule saveDomainLock ".$domainData["name"]);
+            }
             Domain::setDomainLock($domainData, $apiConnection, ($params['lockenabled']=='locked' ? true : false));
             Api::closeApiConnection($apiConnection);
             return array('result'=>'success');
@@ -541,6 +596,9 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule getDomainDNS ".$domainData["name"]);
+            }
             $dns = Domain::getDNS($domainData,$apiConnection);
             Api::closeApiConnection($apiConnection);
             return $dns;
@@ -559,6 +617,9 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 throw new \Exception("Domain is not registered.");
             }
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule storeDomainDNS ".$domainData["name"]);
+            }
             Domain::saveDNS($domainData, $apiConnection, $params['dnsrecords']);
             Api::closeApiConnection($apiConnection);
             return array('result'=>'success');
@@ -572,8 +633,13 @@ class Addon {
         try {
             $apiData            = Helpers::getApiData();
             $apiConnection      = Api::getApiConnection($apiData);
+
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule checkAvailability ");
+            }
+
             $results = new ResultsList();
-            LogActivity("Domain CHECK!",0);
+
             foreach ($params["tlds"] as $tld) {
                 $domainData["search"][] = array(
                     "searchTerm" => $params["searchTerm"],
@@ -611,7 +677,7 @@ class Addon {
 
             $domainname = $domainData['name'];
             if ($apiData["debugMode"]==1) {
-                logActivity("RESET DNS FOR $domainname", $_SESSION["uid"]);
+                logActivity("MetaregistrarModule ResetDNS $domainname", $_SESSION["uid"]);
             }
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 logActivity("IS NOT REGISTERED: $domainname",$_SESSION["uid"]);

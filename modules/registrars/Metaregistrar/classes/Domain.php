@@ -134,6 +134,7 @@ class Domain {
             $apiConnection->request(new metaregEppAutorenewRequest($domain, $domainData["autorenew"]));
             
         } catch (eppException $e) {
+            logActivity("ERROR SET AUTORENEW: ".$e->getMessage());
             throw new \Exception($e->getMessage());
         }
     }
@@ -158,11 +159,17 @@ class Domain {
                 /* @var $contact eppContactHandle */
                 $domainDataRemote[$contact->getContactType()."Id"] = $contact->getContactHandle();
             }
+            list(,$tld) = explode('.',$domainData['name'],2);
             $domainDataRemote["name"] = $domainData["name"];
+            $domainDataRemote["tld"] = $tld;
             $domainDataRemote["period"] = $domain->getPeriod();
             $domainDataRemote["eppCode"] = $domain->getAuthorisationCode();
             $domainDataRemote["expirydate"] = date("Y-m-d", strtotime($response->getDomainExpirationDate()));
-            $domainDataRemote["statuses"] = $response->getDomainStatuses();
+            $domainDataRemote["status"] = implode(',',$response->getDomainStatuses());
+            $domainDataRemote["transferLock"] = false;
+            if (str_contains($domainDataRemote["status"],'TransferProhibited')) {
+                $domainDataRemote["transferLock"] = true;
+            }
             return $domainDataRemote;
 
         } catch (eppException $e) {

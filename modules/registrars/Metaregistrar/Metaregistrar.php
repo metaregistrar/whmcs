@@ -94,6 +94,12 @@ function Metaregistrar_ClientArea($params) {
     return \MetaregistrarModule\classes\Addon::clientArea($params);
 }
 
+
+// This function is disabled because it does not retrieve the nameservers properly - have to find out why TODO
+//function Metaregistrar_GetDomainInformation($params) {
+//    return \MetaregistrarModule\classes\Addon::getDomainInformation($params);
+//}
+
 function Metaregistrar_GetRegistrarLock($params) {
     return \MetaregistrarModule\classes\Addon::getDomainLock($params);
 }
