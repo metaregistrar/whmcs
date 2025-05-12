@@ -131,6 +131,10 @@ class Addon {
             $domainData     = Helpers::getDomainData($params);
             // Check if the domain name is still in our portfolio
             // If not, the domain is transferred out
+            if ($apiData["debugMode"]==1) {
+                logActivity("MetaregistrarModule sync ".$domainData["name"]);
+            }
+
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 return array(
                     'active' => false,
@@ -138,18 +142,23 @@ class Addon {
                 );
             }
 
-            if ($apiData["debugMode"]==1) {
-                logActivity("MetaregistrarModule sync ".$domainData["name"]);
-            }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
 
+            $cancelled = false;
+            if (str_contains($domainDataRemote["status"],'pendingDelete')) {
+                $cancelled = true;
+            }
+            $active = true;
+            if (!str_contains($domainDataRemote["status"],'ok')) {
+                $active = false;
+            }
             return array(
-                'expirydate' => $domainDataRemote["expirydate"],
-                'active' => ((in_array("ok", $domainDataRemote["status"]))?true:false),
-                'cancelled' => ((in_array("pendingDelete", $domainDataRemote["status"]))?true:false),
-                'transferredAway' => false
+                'active' => $active,
+                'cancelled' => $cancelled, // Return true if the domain has been cancelled
+                'transferredAway' => false, // Return true if the domain has been transferred away from this registrar
+                'expirydate' => $domainDataRemote["expirydate"], // Return the current expiry date for the domain
             );
             
         } catch (\Exception $e) {
