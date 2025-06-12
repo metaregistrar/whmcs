@@ -13,6 +13,8 @@ use \Metaregistrar\EPP\eppDeleteContactRequest;
 use \Metaregistrar\EPP\eppInfoContactRequest;
 use \Metaregistrar\EPP\eppInfoContactResponse;
 use \Metaregistrar\EPP\eppUpdateContactRequest;
+use Metaregistrar\EPP\eppCheckContactRequest;
+use Metaregistrar\EPP\eppCheckContactResponse;
 use \Metaregistrar\EPP\metaregEppUpdateContactRequest;
 
 
@@ -37,7 +39,7 @@ class Contact {
             );
             
             $contactInfo->setPassword($contactData["password"]);
-            
+            $contactInfo->setId($contactData["id"]);
             $response   = $apiConnection->request(new eppCreateContactRequest($contactInfo));
             /* @var $response eppCreateContactResponse */
             return $response->getContactId();
@@ -96,6 +98,18 @@ class Contact {
         try {
             $contactHandle = new eppContactHandle($contactData["id"]);
             $apiConnection->request(new eppDeleteContactRequest($contactHandle));
+        } catch (eppException $e) {
+            throw new \Exception($e->getMessage());
+        }
+    }
+
+    static function exists($contactData, eppConnection $apiConnection) {
+        try {
+            $contactHandle = new eppContactHandle($contactData["id"]);
+            $response   = $apiConnection->request(new eppcheckContactRequest($contactHandle));
+            /* @var $response eppCheckContactResponse */
+            $result = $response->getCheckedContacts();
+            return !$result[$contactData["id"]];
         } catch (eppException $e) {
             throw new \Exception($e->getMessage());
         }

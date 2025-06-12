@@ -12,7 +12,7 @@ class Addon {
 
     static function getConfig($params) {
         try {
-            /*
+
             $pdo = Capsule::connection()->getPdo();
             $query =  " CREATE TABLE IF NOT EXISTS MetaregistrarPollData("
                 . "     id int PRIMARY KEY NOT NULL AUTO_INCREMENT, "
@@ -24,7 +24,7 @@ class Addon {
                 . " ) DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;";
             $statement = $pdo->prepare($query);
             $statement->execute();
-            */
+
             return array(
                 "apiUsername" => array (
                     "FriendlyName" => "EPP Username",
@@ -86,7 +86,17 @@ class Addon {
             
             foreach($contactTypeArray as $contactType) {
                 $contactData = Helpers::getContactData($params, $contactType);
-                $domainData[$contactType."Id"] = Contact::register($contactData, $apiConnection);
+                if (isset($contactData['id'])) {
+                    $domainData[$contactType."Id"] = $contactData['id'];
+                } else {
+                    $contactData['id'] = "yncustomer-".$domainData['userid'];
+                    if (!Contact::exists($contactData,$apiConnection)) {
+                        logActivity("Create new contact for customer ".$domainData['userid']);
+                        $domainData[$contactType."Id"] = Contact::register($contactData, $apiConnection);
+                    } else {
+                        logActivity("Contact handle exists for user ".$domainData['userid']);
+                    }
+                }
                 if(!empty($contactData["registry"])&&!empty($contactData["properties"])) {
                     $contactData["id"] = $domainData[$contactType."Id"];
                     Contact::addProperties($contactData, $apiConnection);

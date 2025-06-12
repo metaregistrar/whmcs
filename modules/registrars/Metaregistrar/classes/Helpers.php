@@ -9,6 +9,7 @@ class Helpers {
     const CONTACT_TYPE_ADMIN        = 'admin';
     const CONTACT_TYPE_TECH         = 'tech';
     const CONTACT_TYPE_BILLING      = 'billing';
+    const USE_FOR_ADMIN_TECH_BILLING = 'muvo1k9060c684ac7976ef31';
     
     static function getApiData() {
         $query =  "SELECT setting, value FROM tblregistrars WHERE registrar = 'Metaregistrar'";
@@ -37,23 +38,28 @@ class Helpers {
     }
     
     static function getContactData($params, $contactType) {
+        $contactid = null;
         if(isset($params["contactdetails"])) {
             switch ($contactType) {
                 case self::CONTACT_TYPE_REGISTRANT:
                     $contactTypeTmp = "Registrant";
                     break;
                 case self::CONTACT_TYPE_ADMIN:
+                    $contactid = self::USE_FOR_ADMIN_TECH_BILLING;
                     $contactTypeTmp = "Admin";
                     break;
                 case self::CONTACT_TYPE_TECH:
+                    $contactid = self::USE_FOR_ADMIN_TECH_BILLING;
                     $contactTypeTmp = "Technical";
                     break;
                 case self::CONTACT_TYPE_BILLING:
+                    $contactid = self::USE_FOR_ADMIN_TECH_BILLING;
                     $contactTypeTmp = "Billing";
                     break;
             }
             if(isset($params["contactdetails"][$contactTypeTmp]["Full Name"])) {
                 $contactData = array(
+                    "id"            => $contactid,
                     "name"          => $params["contactdetails"][$contactTypeTmp]["Full Name"],
                     "organization"  => $params["contactdetails"][$contactTypeTmp]["Organisation Name"],
                     "adress"        => $params["contactdetails"][$contactTypeTmp]["Address 1"]." ".$params["contactdetails"][$contactTypeTmp]["Address 2"],
@@ -67,6 +73,7 @@ class Helpers {
                 );
             } else {
                 $contactData = array(
+                    "id"            => $contactid,
                     "name"          => $params["contactdetails"][$contactTypeTmp]["Name"],
                     "organization"  => $params["contactdetails"][$contactTypeTmp]["Organization"],
                     "adress"        => $params["contactdetails"][$contactTypeTmp]["Adress"],
@@ -81,8 +88,12 @@ class Helpers {
                 );
             }
         } else {
+            if ($contactType != self::CONTACT_TYPE_REGISTRANT) {
+                $contactid = $contactid = self::USE_FOR_ADMIN_TECH_BILLING;
+            }
             $contactTypeTmp = ($contactType == self::CONTACT_TYPE_REGISTRANT)?"":"admin";
             $contactData = array(
+                "id"            => $contactid,
                 "name"          => $params[$contactTypeTmp."firstname"]." ".$params[$contactTypeTmp."lastname"],
                 "organization"  => $params[$contactTypeTmp."companyname"],
                 "adress"        => $params[$contactTypeTmp."address1"]." ".$params[$contactTypeTmp."address2"],
@@ -95,7 +106,6 @@ class Helpers {
                 "password"      => self::getRandomString(),
             );
         }
-        
         $tld = $params["tld"];
         $registry = AdditionalProperties::getRelatedRegistry($tld);
         if(!empty($registry)) {
@@ -111,7 +121,7 @@ class Helpers {
                     }
                 }
             }
-        } 
+        }
         return $contactData;
     }
     
@@ -128,7 +138,7 @@ class Helpers {
             }
         }
         $pdo = Capsule::connection()->getPdo();
-        $query = "SELECT expirydate FROM tbldomains WHERE domain = '".$params["domainname"]."'";
+        $query = "SELECT userid,expirydate FROM tbldomains WHERE domain = '".$params["domainname"]."'";
         $pdo->beginTransaction();
         $statement = $pdo->prepare($query);
         $statement->execute();
@@ -136,7 +146,7 @@ class Helpers {
         $pdo->commit();
         
         $domainData["expirydate"] = $row["expirydate"];
-        
+        $domainData["userid"] = $row["userid"];
         return $domainData;
     }
     
