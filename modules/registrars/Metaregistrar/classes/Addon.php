@@ -95,6 +95,7 @@ class Addon {
                         $domainData[$contactType."Id"] = Contact::register($contactData, $apiConnection);
                     } else {
                         logActivity("Contact handle exists for user ".$domainData['userid']);
+                        $domainData[$contactType."Id"] = $contactData['id'];
                     }
                 }
                 if(!empty($contactData["registry"])&&!empty($contactData["properties"])) {
@@ -102,6 +103,7 @@ class Addon {
                     Contact::addProperties($contactData, $apiConnection);
                 }
             }
+            //logActivity("Registrant handle: ".$domainData['registrantId']);
             Domain::register($domainData, $apiConnection);
             if (!$apiData["autoRenewMode"]) {
                 $domainData["autorenew"]    = false;
@@ -114,20 +116,6 @@ class Addon {
             Api::closeApiConnection($apiConnection);
             return array('result'=>'success');
         } catch(\Exception $e) {
-            try {                 //if error occured we have to remove created contacts
-                foreach($contactTypeArray as $contactType) {
-                    if(isset($domainData[$contactType."Id"])) {
-                        $contactData = array(
-                            "id" => $domainData[$contactType."Id"],
-                        );
-                        Contact::remove($contactData, $apiConnection);
-                    }
-                }
-            } catch(\Exception $e2) {
-                logActivity("MetaregistrarModule ERROR: ".$e2->getMessage(),$_SESSION["uid"]);
-                Api::closeApiConnection($apiConnection);
-                return array('error' => $e2->getMessage());
-            }
             logActivity("MetaregistrarModule ERROR: ".$e->getMessage(),$_SESSION["uid"]);
             Api::closeApiConnection($apiConnection);
             return array('error' => $e->getMessage());
