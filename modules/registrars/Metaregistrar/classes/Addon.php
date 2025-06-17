@@ -52,6 +52,12 @@ class Addon {
                     "Description" => "When selected, all created domain names will auto-renew automatically",
                     "Default" => 1,
                 ),
+                "adminContacts" => array (
+                    "FriendlyName" => "Administrative contact",
+                    "Type" => "text",
+                    "Description" => "The contact handle that is used for admin-c, tech-c and billing-c",
+                    "Default" => "",
+                ),
                 "debugMode" => array (
                     "FriendlyName" => "Debug Mode",
                     "Type" => "yesno",
@@ -85,16 +91,16 @@ class Addon {
             );
             
             foreach($contactTypeArray as $contactType) {
-                $contactData = Helpers::getContactData($params, $contactType);
+                $contactData = Helpers::getContactData($params, $contactType, $apiData);
                 if (isset($contactData['id'])) {
                     $domainData[$contactType."Id"] = $contactData['id'];
                 } else {
                     $contactData['id'] = "yncustomer-".$domainData['userid'];
                     if (!Contact::exists($contactData,$apiConnection)) {
-                        logActivity("Create new contact for customer ".$domainData['userid']);
+                        //logActivity("Create new contact for customer ".$domainData['userid']);
                         $domainData[$contactType."Id"] = Contact::register($contactData, $apiConnection);
                     } else {
-                        logActivity("Contact handle exists for user ".$domainData['userid']);
+                        //logActivity("Contact handle exists for user ".$domainData['userid']);
                         $domainData[$contactType."Id"] = $contactData['id'];
                     }
                 }
@@ -185,7 +191,7 @@ class Addon {
             );
         
             foreach($contactTypeArray as $contactType) {
-                $contactData = Helpers::getContactData($params, $contactType);
+                $contactData = Helpers::getContactData($params, $contactType, $apiData);
                 $domainData[$contactType."Id"] = Contact::register($contactData, $apiConnection);
                 if(!empty($contactData["registry"])&&!empty($contactData["properties"])) {
                     $contactData["id"] = $domainData[$contactType."Id"];
@@ -500,7 +506,7 @@ class Addon {
             );
             
             foreach($contactTypeArray as $contactType) {
-                $contactData = Helpers::getContactData($params, $contactType);
+                $contactData = Helpers::getContactData($params, $contactType, $apiData);
                 $contactData["id"] = $domainDataRemote[$contactType."Id"];
                 Contact::update($contactData, $apiConnection);
             }

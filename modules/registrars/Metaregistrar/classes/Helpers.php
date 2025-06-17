@@ -9,7 +9,7 @@ class Helpers {
     const CONTACT_TYPE_ADMIN        = 'admin';
     const CONTACT_TYPE_TECH         = 'tech';
     const CONTACT_TYPE_BILLING      = 'billing';
-    const USE_FOR_ADMIN_TECH_BILLING = 'muvo1k9060c684ac7976ef31';
+
     
     static function getApiData() {
         $query =  "SELECT setting, value FROM tblregistrars WHERE registrar = 'Metaregistrar'";
@@ -26,18 +26,20 @@ class Helpers {
         foreach($rows as $row) {
             $apiData[$row["setting"]] = self::whmcsDecodeString($row["value"]);
         }
-        
+
         return array(
             "host"      => "ssl://eppl.metaregistrar.com",
             "port"      => 7000,
             "username"  => $apiData["apiUsername"],
             "password"  => $apiData["apiPassword"],
+            "LiveServer" => ($apiData["LiveServer"]=="on")?true:false,
             "autoRenewMode" => ($apiData["autoRenewMode"]=="on")?true:false,
+            "adminContacts" => $apiData["adminContacts"],
             "debugMode" => ($apiData["debugMode"]=="on")?true:false
         );
     }
     
-    static function getContactData($params, $contactType) {
+    static function getContactData($params, $contactType, $apiData) {
         $contactid = null;
         if(isset($params["contactdetails"])) {
             switch ($contactType) {
@@ -45,15 +47,21 @@ class Helpers {
                     $contactTypeTmp = "Registrant";
                     break;
                 case self::CONTACT_TYPE_ADMIN:
-                    $contactid = self::USE_FOR_ADMIN_TECH_BILLING;
+                    if (is_string($apiData["adminContacts"]) && (strlen($apiData["adminContacts"])>0)) {
+                        $contactid = $apiData["adminContacts"];
+                    }
                     $contactTypeTmp = "Admin";
                     break;
                 case self::CONTACT_TYPE_TECH:
-                    $contactid = self::USE_FOR_ADMIN_TECH_BILLING;
+                    if (is_string($apiData["adminContacts"]) && (strlen($apiData["adminContacts"])>0)) {
+                        $contactid = $apiData["adminContacts"];
+                    }
                     $contactTypeTmp = "Technical";
                     break;
                 case self::CONTACT_TYPE_BILLING:
-                    $contactid = self::USE_FOR_ADMIN_TECH_BILLING;
+                    if (is_string($apiData["adminContacts"]) && (strlen($apiData["adminContacts"])>0)) {
+                        $contactid = $apiData["adminContacts"];
+                    }
                     $contactTypeTmp = "Billing";
                     break;
             }
@@ -88,8 +96,10 @@ class Helpers {
                 );
             }
         } else {
-            if ($contactType != self::CONTACT_TYPE_REGISTRANT) {
-                $contactid = $contactid = self::USE_FOR_ADMIN_TECH_BILLING;
+            if (is_string($apiData["adminContacts"]) && (strlen($apiData["adminContacts"])>0)) {
+                if ($contactType != self::CONTACT_TYPE_REGISTRANT) {
+                    $contactid = $apiData["adminContacts"];
+                }
             }
             $contactTypeTmp = ($contactType == self::CONTACT_TYPE_REGISTRANT)?"":"admin";
             $contactData = array(
