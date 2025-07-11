@@ -122,7 +122,7 @@ class Addon {
             Api::closeApiConnection($apiConnection);
             return array('result'=>'success');
         } catch(\Exception $e) {
-            logActivity("MetaregistrarModule ERROR: ".$e->getMessage(),$_SESSION["uid"]);
+            logActivity("MetaregistrarModule REGISTER ERROR: ".$e->getMessage(),$_SESSION["uid"]);
             Api::closeApiConnection($apiConnection);
             return array('error' => $e->getMessage());
         }
@@ -189,34 +189,32 @@ class Addon {
                 Helpers::CONTACT_TYPE_TECH,
                 Helpers::CONTACT_TYPE_BILLING,
             );
-        
+
             foreach($contactTypeArray as $contactType) {
                 $contactData = Helpers::getContactData($params, $contactType, $apiData);
-                $domainData[$contactType."Id"] = Contact::register($contactData, $apiConnection);
+                if (isset($contactData['id'])) {
+                    $domainData[$contactType."Id"] = $contactData['id'];
+                } else {
+                    $contactData['id'] = "yncustomer-".$domainData['userid'];
+                    if (!Contact::exists($contactData,$apiConnection)) {
+                        //logActivity("Create new contact for customer ".$domainData['userid']);
+                        $domainData[$contactType."Id"] = Contact::register($contactData, $apiConnection);
+                    } else {
+                        //logActivity("Contact handle exists for user ".$domainData['userid']);
+                        $domainData[$contactType."Id"] = $contactData['id'];
+                    }
+                }
                 if(!empty($contactData["registry"])&&!empty($contactData["properties"])) {
                     $contactData["id"] = $domainData[$contactType."Id"];
                     Contact::addProperties($contactData, $apiConnection);
                 }
             }
+            //logActivity("Registrant handle: ".$domainData['registrantId']);
             Domain::transfer($domainData, $apiConnection);
             Api::closeApiConnection($apiConnection);
             return array('result'=>'success');
-
-        } catch(\Exception $e) {  
-            try {   //if error occured we have to remove created contacts
-                foreach($contactTypeArray as $contactType) {
-                    if(isset($domainData[$contactType."Id"])) {
-                        $contactData = array(
-                            "id" => $domainData[$contactType."Id"],
-                        );
-                        Contact::remove($contactData, $apiConnection);
-                    }
-                }
-            } catch(\Exception $e2) {
-                $loggedWhmcsUserId = $_SESSION["uid"];
-                logActivity("MetaregistrarModule: ".$e2->getMessage(), $loggedWhmcsUserId);
-            }
-            
+        } catch(\Exception $e) {
+            logActivity("MetaregistrarModule TRANSFER ERROR: ".$e->getMessage(),$_SESSION["uid"]);
             Api::closeApiConnection($apiConnection);
             return array('error' => $e->getMessage());
         }
