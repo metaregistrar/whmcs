@@ -93,7 +93,13 @@ class Domain {
             $apiConnection->request(new eppRenewRequest($domain, $domainData["expirydate"]));
 
         } catch (eppException $e) {
-            throw new \Exception($e->getMessage());
+			if ($e->getCode()==2304) {
+				if (!str_contains($e->getMessage(), 'You cannot renew this manually')) {
+					throw new \Exception($e->getMessage());
+				}
+			} else {
+				throw new \Exception($e->getMessage());
+			}
         }
     }
     
