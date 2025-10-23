@@ -135,6 +135,7 @@ class Addon {
             $domainData     = Helpers::getDomainData($params);
             // Check if the domain name is still in our portfolio
             // If not, the domain is transferred out
+	        //logActivity("MetaregistrarModule sync ".$domainData["name"]);
             if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule sync ".$domainData["name"]);
             }
