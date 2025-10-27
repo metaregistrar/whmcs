@@ -72,12 +72,12 @@ class Domain {
             $domain->setPeriodUnit(eppDomain::DOMAIN_PERIOD_UNIT_Y);
             $domain->setAuthorisationCode($domainData["eppCode"]);
             $response = $apiConnection->request(new metaregEppTransferExtendedRequest(eppTransferRequest::OPERATION_REQUEST,$domain));
-            if ($response->getResultCode()!=1001) {
-                logActivity("TRANSFER ERROR: ".$response->getResultMessage());
+            if (($response->getResultCode()!=1000) && ($response->getResultCode()!=1001)) {
+                logActivity("TRANSFER ERROR ".$domainData['name'].": ".$response->getResultMessage());
                 throw new \Exception($response->getResultMessage());
             }
         } catch (eppException $e) {
-            logActivity("TRANSFER ERROR: ".$e->getMessage());
+	        logActivity("TRANSFER ERROR ".$domainData['name'].": ".$response->getResultMessage());
             throw new \Exception($e->getMessage());
         }
     }
