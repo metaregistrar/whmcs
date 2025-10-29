@@ -25,48 +25,48 @@ class Addon {
             $statement = $pdo->prepare($query);
             $statement->execute();
 
-            return array(
-                "apiUsername" => array (
+            return [
+                "apiUsername" => [
                     "FriendlyName" => "EPP Username",
                     "Type" => "text",
                     "Size" => "25",
                     "Description" => "Enter the EPP API username of your Metaregistrar account",
                     "Default" => "",
-                ),
-                "apiPassword" => array (
+                ],
+                "apiPassword" => [
                     "FriendlyName" => "EPP Password",
                     "Type" => "password",
                     "Size" => "25",
                     "Description" => "Enter the EPP API password of your Metaregistrar account",
                     "Default" => "",
-                ),
-                "LiveServer" => array (
+                ],
+                "LiveServer" => [
                     "FriendlyName" => "Live Server",
                     "Type" => "yesno",
                     "Description" => "When ticked, the live service of Metaregistrar is used, when not, the OTE service",
                     "Default" => 0,
-                ),
-                "autoRenewMode" => array (
+                ],
+                "autoRenewMode" => [
                     "FriendlyName" => "Auto renew domains",
                     "Type" => "yesno",
                     "Description" => "When selected, all created domain names will auto-renew automatically",
                     "Default" => 1,
-                ),
-                "adminContacts" => array (
+                ],
+                "adminContacts" => [
                     "FriendlyName" => "Administrative contact",
                     "Type" => "text",
                     "Description" => "The contact handle that is used for admin-c, tech-c and billing-c",
                     "Default" => "",
-                ),
-                "debugMode" => array (
+                ],
+                "debugMode" => [
                     "FriendlyName" => "Debug Mode",
                     "Type" => "yesno",
                     "Description" => "Tick to save API requests and responses in WHMCS module log",
                     "Default" => 0,
-                ),
-            );
+                ]
+            ];
         } catch (Exception $e) {
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }
 
     }
@@ -83,12 +83,12 @@ class Addon {
             if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule register ".$domainData["name"]);
             }
-            $contactTypeArray = array(
+            $contactTypeArray = [
                 Helpers::CONTACT_TYPE_REGISTRANT,
                 Helpers::CONTACT_TYPE_ADMIN,
                 Helpers::CONTACT_TYPE_TECH,
                 Helpers::CONTACT_TYPE_BILLING,
-            );
+            ];
             
             foreach($contactTypeArray as $contactType) {
                 $contactData = Helpers::getContactData($params, $contactType, $apiData);
@@ -120,11 +120,11 @@ class Addon {
             // Setup default DNS for this domain
 
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
         } catch(\Exception $e) {
             logActivity("MetaregistrarModule REGISTER ERROR: ".$e->getMessage(),$_SESSION["uid"]);
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+            return ['error' => $e->getMessage()];
         }
     }
     
@@ -141,10 +141,7 @@ class Addon {
             }
 
             if(!Domain::isRegistered($domainData, $apiConnection)) {
-                return array(
-                    'active' => false,
-                    'transferredAway' => true
-                );
+                return ['active' => false,  'transferredAway' => true];
             }
 
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
@@ -159,16 +156,16 @@ class Addon {
             if (!str_contains($domainDataRemote["status"],'ok')) {
                 $active = false;
             }
-            return array(
+            return [
                 'active' => $active,
                 'cancelled' => $cancelled, // Return true if the domain has been cancelled
                 'transferredAway' => false, // Return true if the domain has been transferred away from this registrar
                 'expirydate' => $domainDataRemote["expirydate"], // Return the current expiry date for the domain
-            );
+            ];
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
     
@@ -184,12 +181,12 @@ class Addon {
             if ($apiData["debugMode"]==1) {
                 logActivity("MetaregistrarModule transferDomain ".$domainData["name"]);
             }
-            $contactTypeArray = array(
+            $contactTypeArray = [
                 Helpers::CONTACT_TYPE_REGISTRANT,
                 Helpers::CONTACT_TYPE_ADMIN,
                 Helpers::CONTACT_TYPE_TECH,
                 Helpers::CONTACT_TYPE_BILLING,
-            );
+            ];
 
             foreach($contactTypeArray as $contactType) {
                 $contactData = Helpers::getContactData($params, $contactType, $apiData);
@@ -213,11 +210,11 @@ class Addon {
             //logActivity("Registrant handle: ".$domainData['registrantId']);
             Domain::transfer($domainData, $apiConnection);
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
         } catch(\Exception $e) {
             logActivity("MetaregistrarModule TRANSFER ERROR: ".$e->getMessage(),$_SESSION["uid"]);
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }
     }
     
@@ -230,7 +227,7 @@ class Addon {
                 logActivity("MetaregistrarModule sync ".$domainData["name"]);
             }
             if(!Domain::isRegistered($domainData, $apiConnection)) {
-                return array();
+                return [];
             } else {
                 // In case autorenew is switched off, sync the autorenew data
                 logActivity("MetaregistrarModule transfersync setting autorenew on for " . $domainData["name"]. " autorenew setting is ".$domainData["autorenew"]);
@@ -241,14 +238,10 @@ class Addon {
 
             Api::closeApiConnection($apiConnection);
 
-            return array(
-                'completed' => true,
-                'expirydate' => $domainDataRemote["expirydate"],
-            );
-            
+            return ['completed' => true,'expirydate' => $domainDataRemote["expirydate"]];
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }
     }
     
@@ -271,11 +264,11 @@ class Addon {
             Domain::renew($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
 
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
     
@@ -294,11 +287,11 @@ class Addon {
             Domain::delete($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
 
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
     
@@ -318,11 +311,11 @@ class Addon {
 
             Api::closeApiConnection($apiConnection);
 
-            return array('eppcode' => $domainDataRemote["eppCode"],);
+            return ['eppcode' => $domainDataRemote["eppCode"]];
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
     
@@ -340,7 +333,7 @@ class Addon {
             }
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
 
-            $returnArray = array();
+            $returnArray = [];
             $index = 1;
             foreach($domainDataRemote["nameservers"] as $nameserver) {
                 $returnArray["ns".$index] = $nameserver;
@@ -352,7 +345,7 @@ class Addon {
         
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
     
@@ -371,11 +364,11 @@ class Addon {
             Domain::updateNameservers($domainData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
 
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
     
@@ -392,11 +385,11 @@ class Addon {
             Host::register($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
     
@@ -412,11 +405,11 @@ class Addon {
             Host::delete($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
     
@@ -431,11 +424,11 @@ class Addon {
             Host::update($hostData, $apiConnection);
 
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
     
@@ -469,16 +462,16 @@ class Addon {
 
             Api::closeApiConnection($apiConnection);
 
-            return array(
+            return [
                 "Registrant"    => Helpers::formatContactData($registrantDataRemote),
                 "Admin"         => Helpers::formatContactData($adminDataRemote),
                 "Technical"     => Helpers::formatContactData($techDataRemote),
                 "Billing"       => Helpers::formatContactData($billingDataRemote),
-            );
+            ];
             
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
     
@@ -497,12 +490,12 @@ class Addon {
             }
             $domainDataRemote       = Domain::getInfo($domainData, $apiConnection);
             
-            $contactTypeArray = array(
+            $contactTypeArray = [
                 Helpers::CONTACT_TYPE_REGISTRANT,
                 Helpers::CONTACT_TYPE_ADMIN,
                 Helpers::CONTACT_TYPE_TECH,
                 Helpers::CONTACT_TYPE_BILLING,
-            );
+            ];
             
             foreach($contactTypeArray as $contactType) {
                 $contactData = Helpers::getContactData($params, $contactType, $apiData);
@@ -511,11 +504,11 @@ class Addon {
             }
             
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
 
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
 
@@ -547,7 +540,7 @@ class Addon {
             }
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }
     }
 
@@ -572,7 +565,7 @@ class Addon {
             }
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }
 
     }
@@ -591,11 +584,11 @@ class Addon {
             }
             Domain::setDomainLock($domainData, $apiConnection, ($params['lockenabled']=='locked' ? true : false));
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
 
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }
     }
 
@@ -616,7 +609,7 @@ class Addon {
             return $dns;
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }
     }
 
@@ -634,10 +627,10 @@ class Addon {
             }
             Domain::saveDNS($domainData, $apiConnection, $params['dnsrecords']);
             Api::closeApiConnection($apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }
     }
 
@@ -653,16 +646,13 @@ class Addon {
             $results = new ResultsList();
 
             foreach ($params["tlds"] as $tld) {
-                $domainData["search"][] = array(
-                    "searchTerm" => $params["searchTerm"],
-                    "tld" => $tld
-                );
+                $domainData["search"][] = ['searchTerm' => $params['searchTerm'],'tld' => $tld];
             }
             
             $apiResults = Domain::isAvailableMulti($domainData, $apiConnection);
             
             foreach ($apiResults as $tld => $isAvailable) {
-                $searchResult = new SearchResult($params["searchTerm"], $tld);
+                $searchResult = new SearchResult($params['searchTerm'], $tld);
                 if($isAvailable) {
                     $status = SearchResult::STATUS_NOT_REGISTERED;
                 } else {
@@ -677,7 +667,7 @@ class Addon {
         
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }    
     }
 
@@ -697,11 +687,11 @@ class Addon {
             }
             Domain::deleteDNS($domainData, $apiConnection);
             Domain::resetDNS($domainData, $apiConnection);
-            return array('result'=>'success');
+	        return ['result'=>'success','success'=>true];
         } catch (\Exception $e) {
             logActivity("ERROR RESETTING DNS: ".$e->getMessage(),$_SESSION["uid"]);
             Api::closeApiConnection($apiConnection);
-            return array('error' => $e->getMessage());
+	        return ['error' => $e->getMessage()];
         }
     }
 
