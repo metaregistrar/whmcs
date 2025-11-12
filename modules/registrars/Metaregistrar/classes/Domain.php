@@ -93,12 +93,18 @@ class Domain {
             $apiConnection->request(new eppRenewRequest($domain, $domainData["expirydate"]));
 
         } catch (eppException $e) {
-			if ($e->getCode()==2304) {
-				if (!str_contains($e->getMessage(), 'You cannot renew this manually')) {
+			if ($e->getCode()==2105) {
+				if (!str_contains($e->getMessage(), 'SIDN does not support explicit renews')) {
 					throw new \Exception($e->getMessage());
 				}
 			} else {
-				throw new \Exception($e->getMessage());
+				if ($e->getCode()==2304) {
+					if (!str_contains($e->getMessage(), 'You cannot renew this manually')) {
+						throw new \Exception($e->getMessage());
+					}
+				} else {
+					throw new \Exception($e->getMessage());
+				}
 			}
         }
     }
@@ -343,6 +349,7 @@ class Domain {
                 /* @var $result metaregInfoDnsResponse */
                 $add = array();
                 $rem = array();
+				// Loop through all records that were received from the website
                 foreach ($dns as $dnsrecord) {
                     // Check if the domain name is present in the DNS record
                     if ($dnsrecord['hostname'] == '') {
@@ -383,6 +390,7 @@ class Domain {
 							// Check if there are records to be added
 							$found = false;
 							//logActivity("MetaregistrarDNS compare dnsrecord: ".implode(',',$dnsrecord), $_SESSION["uid"]);
+							// Loop through all current DNS records that were received from the registrar
 							foreach ($result->getContent() as $content) {
 								//logActivity("MetaregistrarDNS compare with: ".implode(',',$content), $_SESSION["uid"]);
 								if ($content['priority'] == '') {
@@ -390,6 +398,13 @@ class Domain {
 								}
 								if (($dnsrecord['hostname'] == $content['name']) && ($dnsrecord['type'] == $content['type']) && ($dnsrecord['address'] == $content['content']) && ($dnsrecord['priority'] == $content['priority'])) {
 									$found = true;
+								} else {
+									if (($dnsrecord['hostname'] == $content['name']) && ($dnsrecord['type'] == $content['type']) && ($dnsrecord['priority'] == $content['priority'])) {
+										$rem[] = $content;
+									}
+									if (($dnsrecord['hostname'] == $content['name']) && ($dnsrecord['type'] == $content['type']) && ($dnsrecord['address'] == $content['content'])) {
+										$rem[] = $content;
+									}
 								}
 							}
 							if (!$found) {

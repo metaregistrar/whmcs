@@ -229,7 +229,8 @@ class Addon {
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 return [];
             } else {
-                // In case autorenew is switched off, sync the autorenew data
+                // In case autorenew is switched off, sync the autorenew data, force autorenew to TRUE
+	            $domainData["autorenew"]=true;
                 logActivity("MetaregistrarModule transfersync setting autorenew on for " . $domainData["name"]. " autorenew setting is ".$domainData["autorenew"]);
                 Domain::setAutorenew($domainData, $apiConnection);
             }
