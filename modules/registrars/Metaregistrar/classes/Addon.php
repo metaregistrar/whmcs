@@ -231,15 +231,24 @@ class Addon {
             } else {
                 // In case autorenew is switched off, sync the autorenew data, force autorenew to TRUE
 	            $domainData["autorenew"]=true;
-                logActivity("MetaregistrarModule transfersync setting autorenew on for " . $domainData["name"]. " autorenew setting is ".$domainData["autorenew"]);
+	            if ($apiData["debugMode"]==1) {
+		            logActivity("MetaregistrarModule transfersync setting autorenew on for " . $domainData["name"] . " autorenew setting is " . $domainData["autorenew"]);
+	            }
                 Domain::setAutorenew($domainData, $apiConnection);
             }
 
+			// Retrieve most recent data about this domain name from the API
             $domainDataRemote   = Domain::getInfo($domainData, $apiConnection);
-
             Api::closeApiConnection($apiConnection);
 
-            return ['completed' => true,'expirydate' => $domainDataRemote["expirydate"]];
+			// If expirydate is 5 days to the current date, further expirydate one year, or else WHMCS will set the domain name to 'expired'
+			$interval = (time() - strtotime($domainDataRemote["expirydate"]));
+	        if ($interval < 432000) {
+				$expirydate = date("Y-m-d", strtotime($domainDataRemote["expirydate"]." + 1 year"));
+	        } else {
+				$expirydate = $domainDataRemote["expirydate"];
+	        }
+            return ['completed' => true,'expirydate' => $expirydate];
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
 	        return ['error' => $e->getMessage()];
