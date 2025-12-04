@@ -209,6 +209,11 @@ class Addon {
             }
             //logActivity("Registrant handle: ".$domainData['registrantId']);
             Domain::transfer($domainData, $apiConnection);
+
+	        // Setup default DNS for this domain
+	        Domain::resetDNS($domainData, $apiConnection);
+	        // Setup default DNS for this domain
+
             Api::closeApiConnection($apiConnection);
 	        return ['result'=>'success','success'=>true];
         } catch(\Exception $e) {
@@ -224,7 +229,7 @@ class Addon {
             $apiConnection  = Api::getApiConnection($apiData);
             $domainData     = Helpers::getDomainData($params);
             if ($apiData["debugMode"]==1) {
-                logActivity("MetaregistrarModule sync ".$domainData["name"]);
+                logActivity("MetaregistrarModule transfersync ".$domainData["name"]);
             }
             if(!Domain::isRegistered($domainData, $apiConnection)) {
                 return [];
@@ -248,6 +253,7 @@ class Addon {
 	        } else {
 				$expirydate = $domainDataRemote["expirydate"];
 	        }
+
             return ['completed' => true,'expirydate' => $expirydate];
         } catch (\Exception $e) {
             Api::closeApiConnection($apiConnection);
