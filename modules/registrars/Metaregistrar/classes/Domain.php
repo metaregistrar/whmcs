@@ -241,7 +241,7 @@ class Domain {
             
         } catch (eppException $e) {
             $errorMessage = $e->getMessage();
-            if($errorMessage == "Error 2303: Object does not exist") {
+            if (str_contains($errorMessage, "Object does not exist")) {
                 return false;
             } else {
                 throw new \Exception($e->getMessage());
