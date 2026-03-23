@@ -77,7 +77,7 @@ class Domain {
                 throw new \Exception($response->getResultMessage());
             }
         } catch (eppException $e) {
-	        logActivity("TRANSFER ERROR ".$domainData['name'].": ".$response->getResultMessage());
+	        logActivity("TRANSFER ERROR ".$domainData['name']);
             throw new \Exception($e->getMessage());
         }
     }
@@ -323,6 +323,8 @@ class Domain {
 
     static function resetDNS($domainData, eppConnection $eppConnection) {
         $domainname = $domainData["name"];
+		//SERVER001
+	    /*
         $dnsrecords = [
             ['hostname'=>$domainname,'type'=>'NS','address'=>'ns1.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
             ['hostname'=>$domainname,'type'=>'NS','address'=>'ns2.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
@@ -336,6 +338,21 @@ class Domain {
             ['hostname'=>$domainname,'type'=>'MX','address'=>'mail.'.$domainname,'priority'=>'10'],
             ['hostname'=>$domainname,'type'=>'TXT','address'=>'v=spf1 a mx ~all','priority'=>'0']
         ];
+	    */
+		// SERVER002
+	    $dnsrecords = [
+		    ['hostname'=>$domainname,'type'=>'NS','address'=>'ns1.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
+		    ['hostname'=>$domainname,'type'=>'NS','address'=>'ns2.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
+		    ['hostname'=>$domainname,'type'=>'NS','address'=>'ns3.yourdomainprovider.net','priority'=>'0','ttl'=>'86400'],
+		    ['hostname'=>$domainname,'type'=>'A','address'=>'213.249.71.102','priority'=>'0'],
+		    ['hostname'=>'*.'.$domainname,'type'=>'A','address'=>'213.249.71.102','priority'=>'0'],
+		    ['hostname'=>'mail.'.$domainname,'type'=>'A','address'=>'213.249.71.102','priority'=>'0'],
+		    ['hostname'=>$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::102','priority'=>'0'],
+		    ['hostname'=>'*.'.$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::102','priority'=>'0'],
+		    ['hostname'=>'mail.'.$domainname,'type'=>'AAAA','address'=>'2a01:448:1005::102','priority'=>'0'],
+		    ['hostname'=>$domainname,'type'=>'MX','address'=>'mail.'.$domainname,'priority'=>'10'],
+		    ['hostname'=>$domainname,'type'=>'TXT','address'=>'v=spf1 a mx ~all','priority'=>'0']
+	    ];
         Domain::saveDNS($domainData, $eppConnection, $dnsrecords);
     }
 
